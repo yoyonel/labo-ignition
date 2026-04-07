@@ -1,10 +1,12 @@
-# Test Suite Architecture — Ghostty Integration
+# Test Suite Architecture — Ghostty Integration & CLI Tools
 
-**Fichier principal** : [tests/test-ghostty-integration.sh](../tests/test-ghostty-integration.sh) (340 lignes)
+**Fichiers** :
+- [tests/test-ghostty-integration.sh](../tests/test-ghostty-integration.sh) — 27 tests Ghostty
+- [tests/test-cli-tools.sh](../tests/test-cli-tools.sh) — 79 tests outils CLI modernes
 
-**Exécution** : `just test-ghostty` ou `bash tests/test-ghostty-integration.sh`
+**Exécution** : `just test-all` (ou individuellement : `just test-ghostty` / `just test-cli-tools`)
 
-**Résultat** : 27 tests programmtiquement instrumentalisés (0 interactions utilisateur)
+**Résultat** : 106 tests programmtiquement instrumentalisés (0 interactions utilisateur)
 
 ---
 
@@ -426,8 +428,146 @@ test_performance_benchmarks()       # Mesure temps d'install AppImage
 
 ## Conclusion
 
-**La suite de tests est l'équivalent d'une "forme testée" du projet — elle documente ce qui doit marcher et le valide 27 fois à chaque exécution.**
+**La suite de tests est l'équivalent d'une "forme testée" du projet — elle documente ce qui doit marcher et le valide à chaque exécution.**
 
-Sans ces tests, l'installation échouerait silencieurement et l'utilisateur verrait une erreur cryptique. Avec les tests, on détecte les régressions avant qu'elles ne sortent du repo.
+Sans ces tests, l'installation échouerait silencieusement et l'utilisateur verrait une erreur cryptique. Avec les tests, on détecte les régressions avant qu'elles ne sortent du repo.
 
-**Prochaine étape logique** : Intégrer cette suite dans un pipeline CI/CD (GitHub Actions, GitLab CI, etc.) pour l'exécuter automatiquement sur chaque push.
+---
+
+## Suite CLI Tools (`test-cli-tools.sh`)
+
+La seconde suite valide les 9 outils CLI modernes (eza, zoxide, starship, delta, dust, btop, procs, hyperfine, glow). Elle tourne **exclusivement dans le container** (`just test-cli-tools` fait un `podman run`). Tous les outils doivent être installés — un binaire absent est un **FAIL** qui signale un problème dans le Dockerfile.
+
+### Suites
+
+| # | Suite | Tests | Portée |
+|---|-------|-------|--------|
+| 1 | Structure | 8 | Fichiers de configuration présents dans le repo |
+| 2 | Syntaxe | 2 | `bash -n` sur aliases.sh et init.sh |
+| 3 | Contenu | 22 | Patterns attendus dans configs et aliases |
+| 4 | Disponibilité | 9 | Binaires dans le `$PATH` |
+| 5 | Fonctionnel | 35 | Exécution réelle de chaque outil |
+| 6 | Brewfile | 10 | Cohérence des déclarations Homebrew |
+
+### Couverture de tests par outil
+
+#### eza (6 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| listing courant | `eza` s'exécute dans le répertoire courant |
+| listing long | `eza -l` produit un format détaillé |
+| listing avec icônes | Flag `--icons` ne crashe pas (dépend des Nerd Fonts) |
+| tree mode | `eza --tree --level=1` parcourt le repo |
+| git integration | `eza -l --git` affiche le statut git des fichiers |
+| affiche les fichiers du repo | La sortie contient `Brewfile` (fichier connu) |
+
+**Résultat attendu** : L'outil fonctionne comme remplacement complet de `ls` avec git et arbre.
+
+#### zoxide (4 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| init bash | `zoxide init bash` génère du code shell injectable |
+| add + query retrouve /tmp | Cycle complet : on ajoute `/tmp`, on le retrouve dans la liste |
+| query par fragment | `zoxide query tmp` résout vers `/tmp` (algorithme frecency) |
+| scoring | `zoxide query --list --score` affiche un score pour `/tmp` |
+
+**Résultat attendu** : La base SQLite fonctionne, l'ajout/recherche/scoring sont opérationnels.
+
+#### starship (5 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire répond (peut être wrappé par `.bin`) |
+| prompt avec notre config | `starship prompt` avec `STARSHIP_CONFIG` pointe vers notre TOML |
+| module character | Le module `character` (symbole ❯) produit une sortie |
+| module directory | Le module `directory` détecte le répertoire courant |
+| explain sans erreur | `starship explain` ne signale aucune erreur/invalid/unknown |
+
+**Résultat attendu** : Notre `starship.toml` est parsable, les modules s'activent correctement. `explain` garantit que la config ne contient pas de clés invalides.
+
+#### delta (3 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| diff entre deux fichiers | Crée 2 fichiers temporaires différents, `delta` produit un diff non vide (exit code 1 attendu) |
+| list syntax-themes | Les thèmes de coloration syntaxique sont accessibles |
+
+**Résultat attendu** : Delta peut differer des fichiers et accéder à ses thèmes.
+
+#### dust (3 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| analyse /tmp | `dust -n 5 /tmp` parcourt un répertoire réel |
+| profondeur limitée | `dust -d 1` sur le repo fonctionne avec limitation de profondeur |
+
+**Résultat attendu** : L'analyse d'espace disque fonctionne sur des répertoires réels.
+
+#### btop (4 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| locale UTF-8 | `locale -a` contient une locale UTF-8 (btop refuse de démarrer sans) |
+| démarrage réel | Lancement de `btop --utf-force` — on vérifie que la seule erreur est "No tty" (attendu en non-interactif). Toute autre erreur (locale, config, segfault) fait échouer le test. |
+| /proc/stat accessible | Le pseudo-filesystem `/proc/stat` existe (btop en a besoin pour les métriques CPU) |
+
+**Résultat attendu** : btop est prêt à fonctionner — les seules conditions manquantes sont un TTY interactif (impossible en CI non-interactif, mais fourni par `just lab`).
+
+#### procs (4 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| listing | `procs` liste les processus du container |
+| tree mode | `procs --tree` affiche l'arbre de processus |
+| recherche 'bash' | `procs bash` retrouve le shell courant |
+
+**Résultat attendu** : L'outil lit `/proc` correctement et peut filtrer/trier les processus.
+
+#### hyperfine (4 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| benchmark 'echo hello' | Exécution réelle d'un benchmark (2 runs, commande triviale) |
+| export JSON | `--export-json` produit un fichier |
+| JSON output non vide | Le fichier JSON exporté est non vide |
+
+**Résultat attendu** : Le benchmarking fonctionne de bout en bout, y compris l'export structuré.
+
+#### glow (3 tests fonctionnels)
+
+| Test | Ce qu'il vérifie |
+|------|-----------------|
+| version | Le binaire est fonctionnel |
+| rendu README.md | `glow README.md` rend un vrai fichier du repo |
+| rendu stdin | `echo "# Hello" | glow -` produit une sortie (rendu pipe) |
+
+**Résultat attendu** : Le rendu Markdown fonctionne depuis un fichier et depuis stdin.
+
+### Matrice de couverture complète
+
+| Outil | Binaire | Config | Usage réel | I/O données | Erreur attendue |
+|-------|---------|--------|------------|-------------|-----------------|
+| eza | ✅ | — (aliases) | listing, tree, git | ✅ vérifie `Brewfile` | — |
+| zoxide | ✅ | — (init) | add, query, score | ✅ résout `/tmp` | — |
+| starship | ✅ | ✅ TOML parsé | prompt, modules | ✅ explain | — |
+| delta | ✅ | — (gitconfig) | diff réel | ✅ diff non vide | ✅ exit 1 si diff |
+| dust | ✅ | — | analyse disque | ✅ /tmp + repo | — |
+| btop | ✅ | ✅ locale | démarrage | ✅ /proc/stat | ✅ "No tty" attendu |
+| procs | ✅ | — (toml) | listing, tree, filtre | ✅ retrouve `bash` | — |
+| hyperfine | ✅ | — | benchmark réel | ✅ export JSON | — |
+| glow | ✅ | — (yml) | rendu fichier + stdin | ✅ sortie non vide | — |
+
+### Ce que la suite NE teste PAS
+
+❌ **Rendu visuel** — Impossible de valider l'affichage réel (icônes, couleurs, indentation) en non-interactif  
+❌ **Interaction utilisateur** — Pas de simulation de navigation TUI (btop, glow TUI mode)  
+❌ **Performances** — Pas de benchmark des outils eux-mêmes  
+❌ **Aliases shell** — Vérifiés dans la suite 3 (contenu), mais pas exécutés (nécessiterait un shell interactif sourcé)  
+❌ **Intégration Git pour delta** — Le container de test n'a pas de repo `.git` avec historique
