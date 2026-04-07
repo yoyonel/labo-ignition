@@ -1,10 +1,79 @@
-font-family = "FiraCode Nerd Font Mono"
+# ============================================
+# Configuration Ghostty pour labo-ignition
+# Réf: https://ghostty.org/docs/config/reference
+# ============================================
+
+# --- Police ---
+# JetBrainsMono Nerd Font fournit les glyphes Nerd (powerline, icons)
+# Police moderne avec excellente lisibilité pour dev + Nerd Font glyphs
+# Alternatives: MesloLG Nerd Font, FiraCode Nerd Font (installation manuelle)
+# Voir: https://www.nerdfonts.com/font-downloads
+font-family = "JetBrainsMono Nerd Font Mono"
 font-size = 10
+
+# --- Thème ---
+# Liste complète: ghostty +list-themes
+# Ref: https://ghostty.org/docs/config/reference
 theme = "Catppuccin Mocha"
+
+# --- Transparence et Flou ---
+# Opacité : 0.0 (invisible) à 1.0 (opaque)
 background-opacity = 0.9
 background-blur = true
+
+# --- Fenêtre ---
+# fullscreen = Start new windows in native fullscreen mode
+#   Allowable values (depuis Ghostty 1.3+):
+#   • false  : Don't start in fullscreen (default)
+#   • true   : Start in native fullscreen (RECOMMENDED)
+#   • non-native (macOS only) : Faster, hides menu bar
+#   • non-native-visible-menu (macOS only) : Keeps menu bar visible
+#   • non-native-padded-notch (macOS only) : Padding for notch
+#   
+#   ⚠️ Important Notes:
+#   - Applies to NEW windows only, not tabs/splits
+#   - On macOS: requires window-decoration != none
+#   - Tabs may NOT work with non-native fullscreen modes
+#   
+#   Référence Officielle:
+#   https://ghostty.org/docs/config/reference#fullscreen
+fullscreen = true
+
+# Padding intérieur (points, scaled to DPI)
 window-padding-x = 12
 window-padding-y = 12
+
+# Décoration fenêtre: auto (native) | client | server | none
+# Ref: https://ghostty.org/docs/config/reference#window-decoration
 window-decoration = auto
+
+# --- Terminal Features (Kitty Graphics Protocol) ---
+# Active le protocole d'image Kitty pour:
+#   • Yazi (file manager avec aperçus)
+#   • FZF (fuzzy find avec images)
+#   • Autres outils CLI avancés
+# Référence: https://sw.kovidgoyal.net/kitty/graphics-protocol/
+term = xterm-ghostty-256color
+
+# --- Keybindings ---
+# Copier/Coller avec Shift pour éviter les conflits avec signaux shell
+# Ctrl+C = SIGINT (interrupt) — DON'T OVERRIDE
+# Ctrl+Shift+C/V = copy/paste sans conflit
+keybind = "ctrl+shift+c=copy_to_clipboard"
+keybind = "ctrl+shift+v=paste_from_clipboard"
+
+# --- Curseur ---
+# Types: block, beam, underline
 cursor-style = block
 cursor-style-blink = true
+
+# --- Tmux Integration ---
+# Ghostty détecte dès que vous entrez dans tmux
+# et adapte les séquences d'échappement
+# Référence: https://man.openbsd.org/OpenBSD-current/man1/tmux.1#allow-passthrough
+# La valeur correcte pour Ghostty est 'always' (pas un booléen)
+
+# --- Comportements ---
+# Shell integration : detect détecte automatiquement le shell
+# Valeurs valides: none, detect, bash, elvish, fish, nushell, zsh
+shell-integration = detect

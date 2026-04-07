@@ -20,7 +20,10 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y \
     && dpkg -i /tmp/jump.deb && rm /tmp/jump.deb \
     && PROCS_URL=$(curl -s https://api.github.com/repos/dalance/procs/releases/latest | grep "browser_download_url" | grep "x86_64" | grep "\.zip" | head -n 1 | cut -d'"' -f4) \
     && curl -L "${PROCS_URL}" -o /tmp/procs.zip \
-    && unzip /tmp/procs.zip -d /tmp/procs-pkg && mv /tmp/procs-pkg/procs /usr/local/bin/ && rm -rf /tmp/procs*
+    && unzip /tmp/procs.zip -d /tmp/procs-pkg && mv /tmp/procs-pkg/procs /usr/local/bin/ && rm -rf /tmp/procs* \
+    && LSD_URL=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-gnu.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${LSD_URL}" -o /tmp/lsd.tar.gz \
+    && tar -xzf /tmp/lsd.tar.gz -C /tmp/ && mv /tmp/lsd-*/lsd /usr/local/bin/ && rm -rf /tmp/lsd* && chmod +x /usr/local/bin/lsd
 
 # 2. Création de l'utilisateur identique à l'hôte
 RUN useradd -m -u ${USER_ID} -s /bin/bash ${USER_NAME} \
@@ -34,9 +37,10 @@ RUN YAZI_VERSION=$(curl -s https://api.github.com/repos/sxyazi/yazi/releases/lat
     && mv /tmp/yazi-pkg/yazi-x86_64-unknown-linux-gnu/ya /usr/local/bin/ 2>/dev/null || true \
     && rm -rf /tmp/yazi.zip /tmp/yazi-pkg
 
-# 4. Configuration globale & Neutralisation Brew
+# 4. Configuration globale & Aliases
 RUN echo 'alias fd=fdfind' >> /etc/bash.bashrc && \
     echo 'alias bat=batcat' >> /etc/bash.bashrc && \
+    echo 'alias ls=lsd' >> /etc/bash.bashrc && \
     mkdir -p /home/linuxbrew/.linuxbrew/bin && \
     ln -s /usr/bin/true /home/linuxbrew/.linuxbrew/bin/brew && \
     echo 'export PS1="🧪 LABO-CI $PS1"' >> /etc/bash.bashrc

@@ -47,4 +47,4 @@ L'image `labo-ci` est autonome et installe nativement :
 ## 🛡️ Sécurité & Permissions
 - **Mirror Mount** : Ton `$HOME` hôte est monté tel quel (ex: `/var/home/latty`). Toutes tes configs (`.bashrc`, `.ssh`, `.gitconfig`) sont disponibles.
 - **SELinux** : Le labo est lancé avec `--security-opt label=disable` pour permettre l'accès à tes fichiers sans conflits de permissions sur Bazzite.
-- **Rootless** : Podman tourne en mode non-root avec `--userns keep-id`.
+- **Rootless** : Podman tourne en mode non-root. Le container s'exécute avec `--user root` : en rootless podman, `root` dans le container = ton `uid` hôte (1000), sans aucun privilège supplémentaire. C'est la même technique qu'utilise Distrobox.
