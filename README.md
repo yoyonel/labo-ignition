@@ -36,6 +36,10 @@ L'environnement propage les variables `GHOSTTY_*` et `TERM` pour permettre à de
 | `just lab` | Lance le shell interactif (Miroir $HOME + Outils natifs). |
 | `just audit` | Valide ta configuration Ghostty et tes dotfiles. |
 | `just audit-links` | Analyse tes documentations Markdown et vérifie la validité des URLs. |
+| `just lint-shell` | Rejoue le lint shell de la CI localement. |
+| `just lint-dockerfile` | Rejoue le lint Dockerfile de la CI localement. |
+| `just ci-local` | Rejoue localement les prérequis CI/CD avant push. |
+| `just install-hooks` | Installe les hooks `pre-commit` et `pre-push` du repo. |
 | `just test-ghostty` | Exécute la suite de tests Ghostty et documentation. |
 | `just build` | Force la reconstruction de l'image `labo-ci`. |
 | `just clean` | Supprime les conteneurs et images orphelines. |
@@ -81,3 +85,31 @@ Le repo embarque maintenant une base GitHub Actions exploitable immédiatement.
 - Exécution Podman rootless bout-en-bout du labo interactif
 
 Ces deux points restent faisables plus tard avec un runner self-hosted ou un job plus spécialisé si on veut pousser la couverture encore plus loin.
+
+## Flux local recommandé avant push
+
+Le repo expose maintenant le même socle de vérifications côté local :
+
+```bash
+just ci-local
+```
+
+Cette commande rejoue :
+- le lint shell
+- la suite `tests/test-ghostty-integration.sh`
+- la validation des liens Markdown
+- le lint `hadolint` du `Dockerfile`
+- un build smoke test de l'image
+
+Pour automatiser ça avant chaque push :
+
+```bash
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Ou via le repo :
+
+```bash
+just install-hooks
+```

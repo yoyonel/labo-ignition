@@ -9,6 +9,32 @@ default:
 
 # --- Recettes d'audit ---
 
+# Lint shell identique au job CI
+lint-shell:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    shellcheck check_links.sh test_infra.sh scripts/*.sh tests/*.sh
+
+# Lint Dockerfile identique au job CI
+lint-dockerfile:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    podman run --rm -i -v $(pwd):/work:Z -w /work docker.io/hadolint/hadolint hadolint Dockerfile
+
+# Rejoue localement les prérequis CI/CD avant push
+ci-local:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    chmod +x scripts/local-ci.sh
+    ./scripts/local-ci.sh
+
+# Installe les hooks pre-commit et pre-push du repo
+install-hooks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pre-commit install
+    pre-commit install --hook-type pre-push
+
 # Valider tous les liens dans tous les fichiers Markdown du repo
 audit-links:
     #!/usr/bin/env bash

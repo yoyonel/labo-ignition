@@ -187,7 +187,13 @@ gh pr checks <PR_NUMBER>
 
 ### Local Validation (Before Push)
 
-Run these commands locally to catch issues early:
+Preferred local entrypoint:
+
+```bash
+just ci-local
+```
+
+This recipe replays the CI prerequisites locally before push. For manual debugging, the equivalent commands are:
 
 ```bash
 # Check shell scripts
@@ -204,6 +210,19 @@ podman run --rm -i -v "$PWD:/work:Z" -w /work docker.io/hadolint/hadolint hadoli
 
 # Build container image locally
 podman build --build-arg USER_ID=$(id -u) --build-arg USER_NAME=$(whoami) -t labo-test .
+```
+
+To enforce this automatically before each push:
+
+```bash
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Or with the repository helper:
+
+```bash
+just install-hooks
 ```
 
 ---

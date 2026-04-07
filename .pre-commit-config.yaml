@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: labo-local-ci
+        name: labo local ci before push
+        entry: just ci-local
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
