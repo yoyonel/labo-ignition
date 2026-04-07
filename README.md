@@ -51,11 +51,14 @@ L'image `labo-ci` est autonome et installe nativement :
 - **Système** : `tmux`, `bat`, `direnv`, `procs`.
 - **Développement** : `uv`, `starship`, `jump`, `curl`, `git`.
 - **Rendu** : `imagemagick`, `chafa`, `ffmpegthumbnailer`, `poppler-utils`.
+- **GUI** : `ripdrag` (drag & drop GTK4, compilé via cargo).
 
 ## 🛡️ Sécurité & Permissions
 - **Mirror Mount** : Ton `$HOME` hôte est monté tel quel (ex: `/var/home/latty`). Toutes tes configs (`.bashrc`, `.ssh`, `.gitconfig`) sont disponibles.
 - **SELinux** : Le labo est lancé avec `--security-opt label=disable` pour permettre l'accès à tes fichiers sans conflits de permissions sur Bazzite.
 - **Rootless** : Podman tourne en mode non-root. Le container s'exécute avec `--user root` : en rootless podman, `root` dans le container = ton `uid` hôte (1000), sans aucun privilège supplémentaire. C'est la même technique qu'utilise Distrobox.
+- **Display Forwarding** : Détection automatique X11/Wayland — `DISPLAY`, `XAUTHORITY`, socket X11 et socket Wayland sont propagés si présents.
+- **GPU Passthrough** : `/dev/dri` est monté dans le conteneur pour permettre l'accélération graphique (Mesa/DRI) nécessaire aux outils GTK4 comme `ripdrag`.
 
 ## 🔁 CI/CD GitHub
 

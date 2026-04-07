@@ -116,6 +116,16 @@ lab: build
     source ./scripts/detect-ghostty.sh || true
     
     podman rm -f {{container_name}}-run 2>/dev/null || true
+    # Display forwarding (X11 + Wayland)
+    DISPLAY_ARGS=()
+    if [[ -n "${DISPLAY:-}" ]]; then
+        DISPLAY_ARGS+=(-e "DISPLAY=${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix:ro)
+        DISPLAY_ARGS+=(-e "XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}")
+    fi
+    if [[ -n "${WAYLAND_DISPLAY:-}" && -n "${XDG_RUNTIME_DIR:-}" ]]; then
+        DISPLAY_ARGS+=(-e "WAYLAND_DISPLAY=${WAYLAND_DISPLAY}" -v "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:ro")
+    fi
+
     podman run -it --rm --name {{container_name}}-run \
         --security-opt label=disable --network host \
         --user root -e USER={{user_name}} -e HOME=$HOME \
@@ -124,6 +134,8 @@ lab: build
         -e TERM -e COLORTERM -e XDG_RUNTIME_DIR \
         -e GHOSTTY_BIN_DIR="${GHOSTTY_BIN_DIR:-}" \
         -e GHOSTTY_RESOURCES_DIR="${GHOSTTY_RESOURCES_DIR:-}" \
+        "${DISPLAY_ARGS[@]}" \
+        --device /dev/dri \
         --workdir $(pwd) {{container_name}} bash
 
 # Nettoyage
