@@ -1,0 +1,111 @@
+podman build --build-arg USER_ID=1000 --build-arg USER_NAME=latty -t labo-ci .
+STEP 1/11: FROM debian:trixie
+STEP 2/11: ARG USER_ID=1000
+--> Using cache 9ac09c38aa86bbf05d7ddfe121c74e8af8654eebdadafc2ea1894333ec91910e
+--> 9ac09c38aa86
+STEP 3/11: ARG USER_NAME=developer
+--> Using cache 858af80eb1f2961f757d61a6ad94085490b9c31bb171bd48071478f63f61b65f
+--> 858af80eb1f2
+STEP 4/11: RUN apt-get update && apt-get install -y     curl git tmux bat fzf ripgrep fd-find imagemagick chafa     build-essential unzip sudo file less     ffmpegthumbnailer poppler-utils jq 7zip direnv     && rm -rf /var/lib/apt/lists/*
+--> Using cache 853af7dcd2682f225838beed6131baa45b00d64a2d510a1488182d5836424a6b
+--> 853af7dcd268
+STEP 5/11: RUN curl -sS https://starship.rs/install.sh | sh -s -- -y     && curl -LsSf https://astral.sh/uv/install.sh | sh && mv /root/.local/bin/uv* /usr/local/bin/     && JUMP_VERSION=$(curl -s https://api.github.com/repos/gsamokovarov/jump/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d 'v')     && curl -L "https://github.com/gsamokovarov/jump/releases/download/v${JUMP_VERSION}/jump_${JUMP_VERSION}_amd64.deb" -o /tmp/jump.deb     && dpkg -i /tmp/jump.deb && rm /tmp/jump.deb     && curl -L "https://github.com/dalance/procs/releases/download/v0.14.9/procs-v0.14.9-x86_64-lnx.zip" -o /tmp/procs.zip     && unzip /tmp/procs.zip -d /tmp/procs-pkg && mv /tmp/procs-pkg/procs /usr/local/bin/ && rm -rf /tmp/procs*
+
+  Configuration
+> Bin directory: /usr/local/bin
+> Platform:      unknown-linux-musl
+> Arch:          x86_64
+
+> Tarball URL: https://github.com/starship/starship/releases/latest/download/starship-x86_64-unknown-linux-musl.tar.gz
+> Installing Starship, please wait…
+✓ Starship latest installed
+
+> Please follow the steps for your shell to complete the installation:
+  bash
+  Add the following to the end of ~/.bashrc:
+
+	eval "$(starship init bash)"
+
+  zsh
+  Add the following to the end of ~/.zshrc:
+
+	eval "$(starship init zsh)"
+
+  ion
+  Add the following to the end of ~/.config/ion/initrc:
+
+	eval $(starship init ion)
+
+  tcsh
+  Add the following to the end of ~/.tcshrc:
+
+	eval `starship init tcsh`
+
+  xonsh
+  Add the following to the end of ~/.xonshrc:
+
+	execx($(starship init xonsh))
+
+  fish
+  Add the following to the end of ~/.config/fish/config.fish:
+
+	starship init fish | source
+
+  elvish
+  Warning Only elvish v0.17 or higher is supported.
+  And add the following to the end of ~/.config/elvish/rc.elv:
+
+	eval (starship init elvish)
+
+  nushell
+  Warning This will change in the future.
+  Only Nushell v0.96 or higher is supported.
+  And add the following to the end of your nu config file (find it by running $nu.config-path in Nushell):
+
+	mkdir ($nu.data-dir | path join "vendor/autoload")
+        starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
+
+  PowerShell
+  Add the following to the end of Microsoft.PowerShell_profile.ps1:
+  You can check the location of this file by querying the $PROFILE variable in PowerShell.
+  Typically the path is ~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1 or ~/.config/powershell/Microsoft.PowerShell_profile.ps1 on -Nix.
+
+	Invoke-Expression (&starship init powershell)
+
+  Cmd
+  You need to use Clink (v1.2.30+) with Cmd. Add the following to a file starship.lua and place this file in Clink scripts directory:
+
+	load(io.popen('starship init cmd'):read("*a"))()
+
+
+downloading uv 0.11.3 x86_64-unknown-linux-gnu
+installing to /root/.local/bin
+  uv
+  uvx
+everything's installed!
+
+To add $HOME/.local/bin to your PATH, either restart your shell or run:
+
+    source $HOME/.local/bin/env (sh, bash, zsh)
+    source $HOME/.local/bin/env.fish (fish)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  2 2561k    2 55231    0     0  70812      0  0:00:37 --:--:--  0:00:37 70812100 2561k  100 2561k    0     0  1549k      0  0:00:01  0:00:01 --:--:-- 2872k
+Selecting previously unselected package jump.
+(Reading database ... 27123 files and directories currently installed.)
+Preparing to unpack /tmp/jump.deb ...
+Unpacking jump (0.67.0) ...
+Setting up jump (0.67.0) ...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100     9  100     9    0     0     25      0 --:--:-- --:--:-- --:--:--    25
+Archive:  /tmp/procs.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+unzip:  cannot find zipfile directory in one of /tmp/procs.zip or
+        /tmp/procs.zip.zip, and cannot find /tmp/procs.zip.ZIP, period.
+Error: building at STEP "RUN curl -sS https://starship.rs/install.sh | sh -s -- -y     && curl -LsSf https://astral.sh/uv/install.sh | sh && mv /root/.local/bin/uv* /usr/local/bin/     && JUMP_VERSION=$(curl -s https://api.github.com/repos/gsamokovarov/jump/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d 'v')     && curl -L "https://github.com/gsamokovarov/jump/releases/download/v${JUMP_VERSION}/jump_${JUMP_VERSION}_amd64.deb" -o /tmp/jump.deb     && dpkg -i /tmp/jump.deb && rm /tmp/jump.deb     && curl -L "https://github.com/dalance/procs/releases/download/v0.14.9/procs-v0.14.9-x86_64-lnx.zip" -o /tmp/procs.zip     && unzip /tmp/procs.zip -d /tmp/procs-pkg && mv /tmp/procs-pkg/procs /usr/local/bin/ && rm -rf /tmp/procs*": while running runtime: exit status 9
+error: Recipe `build` failed on line 49 with exit code 9
