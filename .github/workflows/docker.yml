@@ -11,6 +11,7 @@ on:
       - test_infra.sh
       - scripts/**
       - dotfiles/**
+      - tests/**
       - .github/workflows/docker.yml
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - test_infra.sh
       - scripts/**
       - dotfiles/**
+      - tests/**
       - .github/workflows/docker.yml
   workflow_dispatch:
 
@@ -53,12 +55,30 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          load: false
+          load: true
+          tags: labo-ci-test:latest
           build-args: |
             USER_ID=1000
             USER_NAME=github
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build warnings check
+        run: |
+          # Rebuild and check for warnings in the build output
+          warnings=$(docker build --build-arg USER_ID=1000 --build-arg USER_NAME=github -t labo-ci-warn-check . 2>&1 | grep -ci 'WARN\|WARNING' || true)
+          if [[ "$warnings" -gt 0 ]]; then
+            echo "::error::$warnings warning(s) detected in Docker build output"
+            exit 1
+          fi
+          echo "✓ Build propre (0 warnings)"
+
+      - name: Run CLI tools integration tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/home/github/project:ro" \
+            labo-ci-test:latest \
+            bash /home/github/project/tests/test-cli-tools.sh
 
   publish:
     name: Publish To GHCR
