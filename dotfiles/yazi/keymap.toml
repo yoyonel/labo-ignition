@@ -1,0 +1,23 @@
+# Yazi Keymap Configuration
+# Ref: https://yazi-rs.github.io/docs/configuration/keymap/
+
+[manager]
+prepend_keymap = [
+    # Libérer 'f' en déplaçant le filtre sur 'F' majuscule
+    { on = [ "F" ], run = "filter --smart", desc = "Filter" },
+
+    # Appel de Plugins externes (Scripts Lua)
+    # { on = [ "f", "g" ], run = "plugin fg", desc = "Find Grep (Interactif)" },
+    # { on = [ "f", "f" ], run = "plugin fg --args='fzf'", desc = "Find File (Interactif)" },
+    
+    # Moteurs de recherche natifs (Modes forcés)
+    # Ref: https://yazi-rs.github.io/docs/quick-start/
+    # Le paramètre `--args='-F'` force l'outil (fd ou rg) à traiter la saisie 
+    # comme du texte littéral (Fixed strings) et non comme une Regex.
+    { on = [ "s" ], run = "search --via=fd --args='-F'", desc = "Recherche fichiers (littérale)" },
+    { on = [ "S" ], run = "search --via=rg --args='-F'", desc = "Recherche contenu (littérale)" },
+
+    # Exécution Shell asynchrone (Drag & Drop)
+    # Lance ripdrag en tâche de fond (`&`). `$@` transmet le fichier sélectionné.
+    { on = [ "<C-n>" ], run = "shell 'ripdrag \"$@\" -x 2>/dev/null &' --confirm", desc = "Glisser-déposer" }
+]
