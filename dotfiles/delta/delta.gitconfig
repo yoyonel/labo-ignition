@@ -1,0 +1,35 @@
+# Delta — Pager Git Diff
+# Ref: https://dandavison.github.io/delta/
+# Ce fichier est à inclure dans votre ~/.gitconfig via :
+#   [include]
+#       path = ~/.config/delta/delta.gitconfig
+
+[core]
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    side-by-side = true
+    line-numbers = true
+    syntax-theme = Catppuccin Mocha
+    plus-style = "syntax #003800"
+    minus-style = "syntax #3f0001"
+    plus-emph-style = "syntax #006000"
+    minus-emph-style = "syntax #600000"
+    line-numbers-left-style = cyan
+    line-numbers-right-style = cyan
+    line-numbers-minus-style = "bold red"
+    line-numbers-plus-style = "bold green"
+    hunk-header-style = "file line-number syntax"
+    hunk-header-decoration-style = "blue box"
+    file-style = "bold yellow ul"
+    file-decoration-style = "yellow ol"
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default

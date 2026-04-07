@@ -1,0 +1,17 @@
+# glow — Rendu Markdown TUI
+# Ref: https://github.com/charmbracelet/glow#configuration
+
+# Style de rendu (dark / light / notty / auto)
+style: "dark"
+
+# Activer le mode souris (scroll dans le TUI)
+mouse: true
+
+# Activer le pager intégré
+pager: true
+
+# Largeur maximale de rendu (0 = auto-détection du terminal)
+width: 100
+
+# Afficher les numéros de lignes pour les blocs de code
+show_line_numbers: true

@@ -1,0 +1,73 @@
+# procs — Liste de processus moderne
+# Ref: https://github.com/dalance/procs#configuration
+
+# Style de sortie
+[style]
+# Couleur pour le header
+header = "BrightWhite|Bold"
+# Couleur alternée pour les lignes
+unit = "BrightCyan"
+
+# Colonnes affichées par défaut
+# Ref: https://github.com/dalance/procs#column-kind-list
+[[columns]]
+kind = "Pid"
+style = "BrightYellow|Bold"
+align = "Right"
+
+[[columns]]
+kind = "User"
+style = "BrightGreen"
+align = "Left"
+
+[[columns]]
+kind = "State"
+style = "BrightRed"
+align = "Center"
+
+[[columns]]
+kind = "Nice"
+style = "BrightMagenta"
+align = "Right"
+
+[[columns]]
+kind = "Cpu"
+style = "BrightCyan"
+align = "Right"
+
+[[columns]]
+kind = "Mem"
+style = "BrightCyan"
+align = "Right"
+
+[[columns]]
+kind = "VmRss"
+style = "BrightBlue"
+align = "Right"
+
+[[columns]]
+kind = "TcpPort"
+style = "BrightYellow"
+align = "Left"
+
+[[columns]]
+kind = "StartTime"
+style = "BrightMagenta"
+align = "Left"
+
+[[columns]]
+kind = "Command"
+style = "BrightWhite"
+align = "Left"
+
+# Pager (désactivé pour utilisation dans des scripts)
+[pager]
+mode = "Auto"
+
+# Recherche (sensibilité à la casse)
+[search]
+nonnumeric_search = "Exact"
+
+# Docker : afficher les conteneurs
+[docker]
+path = "/var/run/docker.sock"
