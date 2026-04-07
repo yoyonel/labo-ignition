@@ -212,7 +212,9 @@ test_links() {
     
     # Test Ghostty-Setup.md links
     local links_output
-    links_output=$(cd "$REPO_DIR" && "$REPO_DIR/check_links.sh" Ghostty-Setup.md 2>&1 || true)
+    if ! links_output=$(cd "$REPO_DIR" && "$REPO_DIR/check_links.sh" Ghostty-Setup.md 2>&1); then
+        :
+    fi
     
     if echo "$links_output" | grep -q "0 Erreurs"; then
         test_pass "Ghostty-Setup.md: all links valid"
@@ -227,7 +229,9 @@ test_links() {
     
     # Test Podman doc links
     local podman_output
-    podman_output=$(cd "$REPO_DIR" && "$REPO_DIR/check_links.sh" Podman-Rootless-Permissions.md 2>&1 || true)
+    if ! podman_output=$(cd "$REPO_DIR" && "$REPO_DIR/check_links.sh" Podman-Rootless-Permissions.md 2>&1); then
+        :
+    fi
     
     if echo "$podman_output" | grep -q "0 Erreurs"; then
         test_pass "Podman-Rootless-Permissions.md: all links valid"

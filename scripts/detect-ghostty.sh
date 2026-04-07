@@ -11,13 +11,12 @@ set -uo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[1;36m'
 NC='\033[0m'
 
 # Détecte le binaire Ghostty
 detect_binary() {
     if command -v ghostty &>/dev/null; then
-        echo "$(command -v ghostty)"
+        command -v ghostty
         return 0
     fi
     return 1

@@ -45,7 +45,7 @@ check_existing() {
 setup_local_bin() {
     mkdir -p "$LOCAL_BIN_DIR"
     if ! echo "$PATH" | grep -q "$LOCAL_BIN_DIR"; then
-        warn "~/.local/bin n'est pas dans \$PATH"
+        warn "$HOME/.local/bin n'est pas dans \$PATH"
         warn "Ajoutez à ~/.bashrc ou ~/.zshrc :"
         echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
     fi

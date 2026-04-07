@@ -56,7 +56,8 @@ setup_config_dir() {
 # Sauvegarde l'ancienne config si elle existe
 backup_config() {
     if [[ -f "$GHOSTTY_CONFIG_FILE" ]]; then
-        local backup_file="${GHOSTTY_CONFIG_FILE}.backup.$(date +%s)"
+        local backup_file
+        backup_file="${GHOSTTY_CONFIG_FILE}.backup.$(date +%s)"
         info "Configuration existante sauvegardée: $backup_file"
         cp "$GHOSTTY_CONFIG_FILE" "$backup_file"
     fi
@@ -96,7 +97,8 @@ check_fonts() {
         echo "$available_nerd_fonts" | head -5 | while read -r font; do
             echo "  • $font"
         done
-        local count=$(echo "$available_nerd_fonts" | wc -l)
+        local count
+        count=$(echo "$available_nerd_fonts" | wc -l)
         if [[ $count -gt 5 ]]; then
             echo "  ... et $(( count - 5 )) autres"
         fi

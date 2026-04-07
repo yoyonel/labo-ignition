@@ -1,10 +1,16 @@
 #!/bin/bash
 
 # Configuration : fichier passé en argument, ou détection automatique du fichier Environ.md
-if [[ -n "$1" ]] && [[ -f "$1" ]]; then
+if [[ -n "${1:-}" ]] && [[ -f "$1" ]]; then
     DOC_FILE="$1"
 else
-    DOC_FILE=$(ls | grep "Environ.md" | head -n 1)
+    DOC_FILE=""
+    for candidate in *Environ.md; do
+        if [[ -f "$candidate" ]]; then
+            DOC_FILE="$candidate"
+            break
+        fi
+    done
 fi
 
 if [[ -z "$DOC_FILE" ]] || [[ ! -f "$DOC_FILE" ]]; then
