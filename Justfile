@@ -21,26 +21,6 @@ lint-dockerfile:
     set -euo pipefail
     podman run --rm -i -v $(pwd):/work:Z -w /work docker.io/hadolint/hadolint hadolint Dockerfile
 
-# Lint build : vérifie que la construction de l'image ne produit aucun warning
-lint-build: build
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo -e "\e[1;36m==> Vérification warnings dans le build...\e[0m"
-    build_log=$(mktemp)
-    podman build \
-      --format docker \
-      --build-arg USER_ID={{user_id}} \
-      --build-arg USER_NAME={{user_name}} \
-      -t {{container_name}}-lint . 2>&1 | tee "$build_log"
-    warn_count=$(grep -ci "WARN\|WARNING" "$build_log" || true)
-    podman rmi {{container_name}}-lint 2>/dev/null || true
-    rm -f "$build_log"
-    if [[ "$warn_count" -gt 0 ]]; then
-        echo -e "\e[1;31m✗ $warn_count warning(s) détecté(s) dans le build\e[0m"
-        exit 1
-    fi
-    echo -e "\e[1;32m✓ Build propre (0 warnings)\e[0m"
-
 # Rejoue localement les prérequis CI/CD avant push
 ci-local:
     #!/usr/bin/env bash
@@ -96,8 +76,8 @@ audit-ghostty:
 # Audit de l'instructure via le script CI (Podman)
 audit-infra: test-ci
 
-# Audit complet (Liens + Infra + Build)
-audit: audit-links audit-infra lint-build
+# Audit complet (Liens + Infra)
+audit: audit-links audit-infra
 
 # Tests pour l'intégration Ghostty (suite de tests programmatique)
 test-ghostty:

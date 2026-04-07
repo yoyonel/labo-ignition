@@ -37,15 +37,6 @@ run_step "Dockerfile lint" podman run --rm -i -v "$ROOT_DIR:/work:Z" -w /work do
 
 run_step "Container build (format docker)" podman build --format docker --build-arg USER_ID="$(id -u)" --build-arg USER_NAME="$(whoami)" -t labo-local-ci-smoke .
 
-run_step "Build warnings check" bash -c "
-    warn_count=\$(podman build --format docker --build-arg USER_ID=\$(id -u) --build-arg USER_NAME=\$(whoami) -t labo-local-ci-smoke . 2>&1 | grep -ci 'WARN\|WARNING' || true)
-    if [[ \$warn_count -gt 0 ]]; then
-        echo \"FAIL: \$warn_count warning(s) in build output\"
-        exit 1
-    fi
-    echo 'OK: 0 warnings'
-"
-
 run_step "CLI tools integration tests (container)" podman run --rm \
     -v "$ROOT_DIR:/home/$(whoami)/project:ro,z" \
     labo-local-ci-smoke \

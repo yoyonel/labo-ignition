@@ -251,7 +251,7 @@ Lent, dépend d'infra externe, pas de vérification de checksum.
 
 **Fichier** : `check_links.sh`
 
-Pas de `set -u`. Extraction des URLs par `sed` mangle les `:` des URLs `https://`.
+Pas de `set -u`. Extraction des URLs par `sed` mangle les `:` des URLs HTTPS.
 
 **Plan** : Ajouter `set -u`. Refactorer l'extraction avec un pattern grep plus robuste :
 ```bash
