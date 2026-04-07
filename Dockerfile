@@ -9,13 +9,21 @@ ARG USER_NAME=developer
 # 1. Dépendances système & Outils CLI (Debian 13 Trixie)
 RUN apt-get update && apt-get install -y \
     curl git tmux bat fzf ripgrep fd-find imagemagick chafa \
-    unzip sudo file less \
+    unzip sudo file less locales tzdata \
     ffmpegthumbnailer poppler-utils jq 7zip direnv \
-    ncurses-term \
+    ncurses-term btop \
     libgtk-4-1 libpango-1.0-0 libatk1.0-0 libcairo2 \
+    && sed -i '/fr_FR.UTF-8/s/^# //' /etc/locale.gen \
+    && sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
 
+ENV LANG=fr_FR.UTF-8
+ENV LC_ALL=fr_FR.UTF-8
+ENV TZ=Europe/Paris
+
 # 2. Installation des outils (natif & global)
+# hadolint ignore=SC2046
 RUN curl -sS https://starship.rs/install.sh | sh -s -- -y \
     && curl -LsSf https://astral.sh/uv/install.sh | sh && mv /root/.local/bin/uv* /usr/local/bin/ \
     && JUMP_VERSION=$(curl -s https://api.github.com/repos/gsamokovarov/jump/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d 'v') \
@@ -26,7 +34,29 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y \
     && unzip /tmp/procs.zip -d /tmp/procs-pkg && mv /tmp/procs-pkg/procs /usr/local/bin/ && rm -rf /tmp/procs* \
     && LSD_URL=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-gnu.tar.gz" | head -n 1 | cut -d'"' -f4) \
     && curl -L "${LSD_URL}" -o /tmp/lsd.tar.gz \
-    && tar -xzf /tmp/lsd.tar.gz -C /tmp/ && mv /tmp/lsd-*/lsd /usr/local/bin/ && rm -rf /tmp/lsd* && chmod +x /usr/local/bin/lsd
+    && tar -xzf /tmp/lsd.tar.gz -C /tmp/ && mv /tmp/lsd-*/lsd /usr/local/bin/ && rm -rf /tmp/lsd*  && chmod +x /usr/local/bin/lsd
+
+# 2b. Outils CLI modernes (GitHub releases)
+# hadolint ignore=SC2046
+RUN EZA_URL=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-gnu.tar.gz" | grep -v "man" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${EZA_URL}" -o /tmp/eza.tar.gz \
+    && tar -xzf /tmp/eza.tar.gz -C /usr/local/bin/ && chmod +x /usr/local/bin/eza && rm -rf /tmp/eza* \
+    && ZOXIDE_URL=$(curl -s https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-musl.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${ZOXIDE_URL}" -o /tmp/zoxide.tar.gz \
+    && tar -xzf /tmp/zoxide.tar.gz -C /tmp/ && mv /tmp/zoxide /usr/local/bin/ && rm -rf /tmp/zoxide* \
+    && DELTA_URL=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-musl.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${DELTA_URL}" -o /tmp/delta.tar.gz \
+    && tar -xzf /tmp/delta.tar.gz -C /tmp/ && mv /tmp/delta-*/delta /usr/local/bin/ && rm -rf /tmp/delta* \
+    && DUST_URL=$(curl -s https://api.github.com/repos/bootandy/dust/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-musl.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${DUST_URL}" -o /tmp/dust.tar.gz \
+    && tar -xzf /tmp/dust.tar.gz -C /tmp/ && mv /tmp/dust-*/dust /usr/local/bin/ && rm -rf /tmp/dust* \
+    && HF_URL=$(curl -s https://api.github.com/repos/sharkdp/hyperfine/releases/latest | grep "browser_download_url" | grep "x86_64-unknown-linux-musl.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${HF_URL}" -o /tmp/hyperfine.tar.gz \
+    && tar -xzf /tmp/hyperfine.tar.gz -C /tmp/ && mv /tmp/hyperfine-*/hyperfine /usr/local/bin/ && rm -rf /tmp/hyperfine* \
+    && GLOW_URL=$(curl -s https://api.github.com/repos/charmbracelet/glow/releases/latest | grep "browser_download_url" | grep "Linux_x86_64.tar.gz" | head -n 1 | cut -d'"' -f4) \
+    && curl -L "${GLOW_URL}" -o /tmp/glow.tar.gz \
+    && mkdir -p /tmp/glow-pkg && tar -xzf /tmp/glow.tar.gz -C /tmp/glow-pkg/ \
+    && find /tmp/glow-pkg -name glow -type f -exec mv {} /usr/local/bin/ \; && rm -rf /tmp/glow*
 
 # 2. Création de l'utilisateur identique à l'hôte
 RUN useradd -m -u ${USER_ID} -s /bin/bash ${USER_NAME} \
