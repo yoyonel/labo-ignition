@@ -1,5 +1,7 @@
 FROM debian:trixie
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # Arguments pour l'utilisateur (UID/GID de l'hôte)
 ARG USER_ID=1000
 ARG USER_NAME=developer
@@ -38,6 +40,7 @@ RUN YAZI_VERSION=$(curl -s https://api.github.com/repos/sxyazi/yazi/releases/lat
     && rm -rf /tmp/yazi.zip /tmp/yazi-pkg
 
 # 4. Configuration globale & Aliases
+# hadolint ignore=SC2016
 RUN echo 'alias fd=fdfind' >> /etc/bash.bashrc && \
     echo 'alias bat=batcat' >> /etc/bash.bashrc && \
     echo 'alias ls=lsd' >> /etc/bash.bashrc && \
@@ -49,6 +52,7 @@ RUN echo 'alias fd=fdfind' >> /etc/bash.bashrc && \
 ENV TERM=xterm-256color
 
 # On bascule sur l'utilisateur identique à l'hôte
+# hadolint ignore=SC2016
 RUN mv /usr/local/bin/starship /usr/local/bin/starship.bin && \
     printf '#!/bin/sh\nif [ "$1" = "prompt" ]; then\n  shift\n  printf "🧪 LAB " && exec /usr/local/bin/starship.bin prompt "$@"\nelse\n  exec /usr/local/bin/starship.bin "$@"\nfi\n' > /usr/local/bin/starship && \
     chmod +x /usr/local/bin/starship
