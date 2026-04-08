@@ -3,7 +3,7 @@
 # Analyse de taille et dependances de l'image labo-ci
 # Usage: ./scripts/analyze-image.sh [image_name]
 
-set -euo pipefail
+set -uo pipefail
 
 IMAGE="${1:-labo-ci}"
 
@@ -27,7 +27,7 @@ header "Image size"
 podman images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "REPOSITORY|${IMAGE}"
 
 header "Layer breakdown"
-podman history "${IMAGE}" --format "{{.Size}}\t{{.CreatedBy}}" | head -20
+podman history "${IMAGE}" --format "{{.Size}}\t{{.CreatedBy}}" 2>/dev/null | head -20 || true
 
 # --- In-container analysis ---
 header "Top 30 paquets Debian (par taille installee)"
@@ -44,11 +44,11 @@ podman run --rm "${IMAGE}" bash -c \
 
 header "Dependances inverses des gros paquets"
 podman run --rm "${IMAGE}" bash -c '
-for pkg in libllvm19 mesa-vulkan-drivers pocketsphinx-en-us libflite1 libz3-4 libgs10; do
-    SIZE=$(dpkg-query -Wf "\${Installed-Size}" "$pkg" 2>/dev/null || echo "absent")
-    [ "$SIZE" = "absent" ] && continue
-    RDEPS=$(apt-cache rdepends --installed "$pkg" 2>/dev/null | tail -n +3 | sed "s/^[| ]*//" | grep -v "^$" | tr "\n" ", ")
-    printf "%-30s %6s KB  <-- %s\n" "$pkg" "$SIZE" "$RDEPS"
+for pkg in $(dpkg-query -Wf "\${Installed-Size}\t\${Package}\n" | sort -rn | head -15 | awk "{print \$2}"); do
+    SIZE=$(dpkg-query -Wf "\${Installed-Size}" "$pkg" 2>/dev/null)
+    [ -z "$SIZE" ] || [ "$SIZE" -eq 0 ] 2>/dev/null && continue
+    RDEPS=$(apt-cache rdepends --installed "$pkg" 2>/dev/null | tail -n +3 | sed "s/^[| ]*//" | grep -v "^$" | tr "\n" ", " | sed "s/, $//")
+    printf "%-30s %6d KB  <-- %s\n" "$pkg" "$SIZE" "$RDEPS"
 done
 '
 

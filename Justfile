@@ -144,7 +144,7 @@ debtree package: build
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Generating dependency graph for {{package}}..."
-    podman run --rm {{container_name}} bash -c \
+    podman run --rm --user root {{container_name}} bash -c \
       'apt-get update -qq && apt-get install -y -qq --no-install-recommends debtree graphviz >/dev/null 2>&1 && debtree {{package}}' \
       | dot -Tsvg > "{{package}}-deps.svg"
     echo "Generated: {{package}}-deps.svg"
@@ -152,7 +152,7 @@ debtree package: build
 # Affiche l'arbre de dependances recursif d'un paquet
 # Usage: just apt-rdepends libgtk-4-1
 apt-rdepends package: build
-    podman run --rm {{container_name}} bash -c \
+    podman run --rm --user root {{container_name}} bash -c \
       'apt-get update -qq && apt-get install -y -qq --no-install-recommends apt-rdepends >/dev/null 2>&1 && apt-rdepends {{package}}'
 
 # --- Laboratoire de développement (Docker/Podman) ---
