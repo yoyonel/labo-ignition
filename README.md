@@ -3,7 +3,7 @@
 [![CI](https://github.com/yoyonel/labo-ignition/actions/workflows/ci.yml/badge.svg)](https://github.com/yoyonel/labo-ignition/actions/workflows/ci.yml)
 [![Docker](https://github.com/yoyonel/labo-ignition/actions/workflows/docker.yml/badge.svg)](https://github.com/yoyonel/labo-ignition/actions/workflows/docker.yml)
 
-Ce projet fournit un environnement de développement conteneurisé robuste, basé sur **Debian 13 (Trixie)**, optimisé pour un usage transparent sous **Bazzite/Fedora** avec le terminal **Ghostty**.
+Ce projet fournit un environnement de développement conteneurisé robuste, basé sur **Debian 13 (Trixie Slim)**, optimisé pour un usage transparent sous **Bazzite/Fedora** avec le terminal **Ghostty**.
 
 Pour initialiser ton environnement (une seule fois) :
 ```bash
@@ -57,12 +57,14 @@ L'environnement propage les variables `GHOSTTY_*` et `TERM` pour permettre à de
 
 ## 🏗️ Architecture du Conteneur
 
-L'image `labo-ci` est autonome et installe nativement :
+L'image `labo-ci` (~750 MB) est autonome et installe nativement :
 - **Navigation** : `yazi`, `fzf`, `fd`, `rg`.
 - **Système** : `tmux`, `bat`, `direnv`, `procs`.
 - **Développement** : `uv`, `starship`, `jump`, `curl`, `git`.
 - **Rendu** : `imagemagick`, `chafa`, `ffmpegthumbnailer`, `poppler-utils`.
-- **GUI** : `ripdrag` (drag & drop GTK4, compilé via cargo).
+- **GUI** : `ripdrag` (drag & drop GTK4, compilé via multi-stage build).
+
+**Optimisations image** : base `debian:trixie-slim`, `--no-install-recommends`, multi-stage build pour `ripdrag` (Rust/GTK-dev isolés du runtime).
 
 ## 🛡️ Sécurité & Permissions
 - **Mirror Mount** : Ton `$HOME` hôte est monté tel quel (ex: `/var/home/latty`). Toutes tes configs (`.bashrc`, `.ssh`, `.gitconfig`) sont disponibles.

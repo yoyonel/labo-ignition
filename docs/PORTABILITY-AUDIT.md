@@ -290,13 +290,13 @@ Flag de relabeling Podman/SELinux. Docker l'accepte mais l'ignore.
 
 ---
 
-### M23. Dockerfile : ripdrag build from source
+### M23. ~~Dockerfile : ripdrag build from source~~ ✅ RÉSOLU
 
-**Fichier** : `Dockerfile` (lignes 50-52)
+**Fichier** : `Dockerfile`
 
-Installe Rust + GTK4 dev → compile ripdrag → désinstalle. ~5 min, fragile.
+~~Installe Rust + GTK4 dev → compile ripdrag → désinstalle. ~5 min, fragile.~~
 
-**Plan** : Surveiller les releases GitHub de ripdrag pour d'éventuels binaires pré-compilés. Sinon, multi-stage build pour isoler la compilation.
+**Résolution** : Multi-stage build implémenté. Un stage `builder-ripdrag` isole Rust/gcc/libgtk-4-dev, seul le binaire est copié via `COPY --from=builder-ripdrag`. L'image finale ne contient plus aucun artéfact de compilation.
 
 ---
 
@@ -327,7 +327,7 @@ sh /tmp/starship.sh -y
 | L30 | Brewfile | Homebrew-only, pas d'alternative apt/dnf | Le Dockerfile est l'alternative — documenter |
 | L31 | test-ghostty-integration.sh | `check_links.sh` peut ne pas être exécutable après clone | Ajouter `chmod +x` en début de test ou dans le Justfile |
 | L32 | yazi keymap.toml | `ripdrag` requis + display server pour drag-and-drop | Erreurs cachées par `2>/dev/null` — acceptable, documenter |
-| L33 | Dockerfile | GTK4/Pango/Cairo runtime libs lourdes pour CLI | Envisager un stage séparé ou conditionnel pour ripdrag |
+| ~~L33~~ | ~~Dockerfile~~ | ~~GTK4/Pango/Cairo runtime libs lourdes pour CLI~~ | ✅ Multi-stage build + `--no-install-recommends` : image réduite de 1.39 GB → 757 MB |
 | L34 | test_infra.sh | `apt-get` sans sudo — suppose root | Ajouter un guard `if [ "$(id -u)" -ne 0 ]; then ... fi` |
 | L35 | configure-ghostty.sh | URL Nerd Font version `v3.0.0` hardcodée | Utiliser `/latest` ou documenter la mise à jour |
 
