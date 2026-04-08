@@ -81,9 +81,11 @@ fi
 # --user root en rootless Podman : root-in-container == UID hôte (pas de vrais privilèges).
 # C'est le mécanisme natif documenté dans Podman-Rootless-Permissions.md.
 # --userns keep-id provoque des erreurs overlay sur Bazzite/Fedora Atomic, donc on garde --user root.
+# --security-opt label=disable est indispensable sur Bazzite/Fedora (SELinux) pour lire $HOME.
 "${ENGINE}" run -it --rm \
     --name labo-ci-run \
     --user root \
+    --security-opt label=disable \
     "${NETWORK_ARGS[@]}" \
     -e USER="${USER_NAME}" \
     -e HOME="${HOME}" \
