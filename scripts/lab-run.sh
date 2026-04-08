@@ -6,7 +6,6 @@ set -euo pipefail
 
 IMAGE_NAME="${1:-labo-ci}"
 USER_NAME=$(whoami)
-USER_ID=$(id -u)
 PROJECT_DIR=$(pwd)
 
 echo -e "\e[1;36m==> Lancement du labo-ignition via l'image : ${IMAGE_NAME}...\e[0m"
