@@ -57,7 +57,7 @@ jobs:
             labo-ci-test:latest \
             bash /home/github/project/tests/test-cli-tools.sh
 
-      - name: Trivy vulnerability scan (Table output for logs)
+      - name: Trivy scan — block on CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: labo-ci-test:latest
@@ -65,6 +65,15 @@ jobs:
           exit-code: 1
           severity: CRITICAL
           ignore-unfixed: true
+
+      - name: Trivy scan — report HIGH vulnerabilities (non-blocking)
+        if: always()
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: labo-ci-test:latest
+          format: table
+          exit-code: 0
+          severity: HIGH
 
       - name: Trivy vulnerability scan (SARIF output for Security tab)
         uses: aquasecurity/trivy-action@master
