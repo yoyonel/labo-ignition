@@ -5,7 +5,7 @@ FROM debian:trixie-slim AS builder-ripdrag
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
         curl ca-certificates pkg-config libgtk-4-dev gcc libc6-dev \
     && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal \
     && . /root/.cargo/env \
@@ -31,7 +31,7 @@ ARG GITHUB_TOKEN=""
 
 # 1. Dépendances système & Outils CLI (Debian 13 Trixie)
 #    --no-install-recommends évite ~500MB de paquets parasites (LLVM, Mesa, pocketsphinx…)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     curl ca-certificates git tmux bat fzf ripgrep fd-find chafa \
     unzip sudo file less locales tzdata \
     ffmpegthumbnailer poppler-utils jq 7zip direnv \
