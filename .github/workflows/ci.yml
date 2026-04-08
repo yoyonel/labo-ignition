@@ -66,3 +66,22 @@ jobs:
         uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: Dockerfile
+
+  # Final job to provide a single 'CI' status check
+  ci-status:
+    name: CI
+    needs: [shell-and-tests, documentation, dockerfile]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.shell-and-tests.result }}" == "success" ]] && \
+             [[ "${{ needs.documentation.result }}" == "success" ]] && \
+             [[ "${{ needs.dockerfile.result }}" == "success" ]]; then
+            echo "All CI checks passed"
+            exit 0
+          else
+            echo "Some CI checks failed"
+            exit 1
+          fi

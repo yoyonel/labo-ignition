@@ -5,23 +5,10 @@ on:
     branches:
       - master
       - main
-    paths:
-      - Dockerfile
-      - Justfile
-      - test_infra.sh
-      - scripts/**
-      - dotfiles/**
-      - tests/**
-      - .github/workflows/docker.yml
+    branches:
+      - master
+      - main
   pull_request:
-    paths:
-      - Dockerfile
-      - Justfile
-      - test_infra.sh
-      - scripts/**
-      - dotfiles/**
-      - tests/**
-      - .github/workflows/docker.yml
   workflow_dispatch:
 
 concurrency:
@@ -72,13 +59,29 @@ jobs:
             labo-ci-test:latest \
             bash /home/github/project/tests/test-cli-tools.sh
 
-      - name: Trivy vulnerability scan
+      - name: Trivy vulnerability scan (Table output for logs)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: labo-ci-test:latest
           format: table
-          exit-code: 0
+          exit-code: 1
+          severity: CRITICAL
+          ignore-unfixed: true
+
+      - name: Trivy vulnerability scan (SARIF output for Security tab)
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          image-ref: labo-ci-test:latest
+          format: sarif
+          output: trivy-results.sarif
           severity: CRITICAL,HIGH
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
 
   publish:
     name: Publish To GHCR
@@ -128,3 +131,23 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Final job to provide a single 'Docker' status check
+  docker-status:
+    name: Docker
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.build.result }}" == "success" ]]; then
+            echo "Docker build passed"
+            exit 0
+          elif [[ "${{ needs.build.result }}" == "skipped" ]]; then
+            echo "Docker build skipped (normal)"
+            exit 0
+          else
+            echo "Docker build failed"
+            exit 1
+          fi
