@@ -124,15 +124,15 @@
 
 | Tranche | Domaine | Effort | Sécu | Porta | Priorité | Statut |
 |---------|---------|--------|------|-------|----------|--------|
-| T1 | Sécurité | Faible | +1.5 | — | P0 | ⬜ |
-| T2 | Sécurité | Moyen | +1.0 | — | P0 | ⬜ |
-| T3 | Portabilité | Élevé | — | +2.0 | P0 | ⬜ |
-| T4 | Portabilité | Moyen | — | +0.5 | P1 | ⬜ |
-| T5 | Portabilité | Faible | — | +0.5 | P1 | ⬜ |
-| T6 | Portabilité | Moyen | — | +0.5 | P1 | ⬜ |
-| T7 | Sécurité | Élevé | +0.5 | — | P2 | ⬜ |
-| T8 | Portabilité | Faible | — | +0.5 | P2 | ⬜ |
-| T9 | Les deux | Moyen | +0.5 | +0.5 | P2 | ⬜ |
+| T1 | Sécurité | Faible | +1.5 | — | P0 | ✅ |
+| T2 | Sécurité | Moyen | +1.0 | — | P0 | ✅ |
+| T3 | Portabilité | Élevé | — | +2.0 | P0 | ✅ |
+| T4 | Portabilité | Moyen | — | +0.5 | P1 | ✅ |
+| T5 | Portabilité | Faible | — | +0.5 | P1 | ✅ |
+| T6 | Portabilité | Moyen | — | +0.5 | P1 | ✅ |
+| T7 | Sécurité | Élevé | +0.5 | — | P2 | ✅ |
+| T8 | Portabilité | Faible | — | +0.5 | P2 | ✅ |
+| T9 | Les deux | Moyen | +0.5 | +0.5 | P2 | ✅ |
 
 **P0 seul** amène à : Sécurité ~8.5/10, Portabilité ~7/10.
 **P0 + P1** : Sécurité ~8.5/10, Portabilité ~8.5/10.
