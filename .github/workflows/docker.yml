@@ -74,11 +74,19 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
 
+      - name: Fix Trivy SARIF URI (Normalization for GitHub)
+        if: always()
+        run: |
+          # Remplace le schéma 'labo-ci-test:latest' par un chemin relatif vers le Dockerfile
+          # pour que GitHub accepte d'importer le rapport de sécurité.
+          sed -i 's/labo-ci-test:latest/Dockerfile/g' trivy-results.sarif
+
       - name: Upload Trivy scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: trivy-results.sarif
+          category: trivy-image
 
   publish:
     name: Publish To GHCR
