@@ -106,23 +106,30 @@ The `.hadolint.yaml` file ignores these non-actionable rules:
 ### 1. Build Container Image (30 min timeout)
 **What it does:**
 - Sets up Docker Buildx multi-platform builder
-- Builds container image from `Dockerfile` with arguments: `USER_ID=1000`, `USER_NAME=github`
+- Builds container image from `Dockerfile` with arguments: `USER_ID=1000`, `USER_NAME=github`, `GITHUB_TOKEN`
+- Runs the 85 CLI tools integration tests inside the container
+- Runs **Trivy vulnerability scan** (split strategy):
+  - **CRITICAL** vulnérabilités → **bloquent** le build (`exit-code: 1`)
+  - **HIGH** vulnérabilités → **reportées** mais non-bloquantes (`exit-code: 0`)
 - **Does NOT push** — smoke test only
 - Caches build layers in GitHub Actions cache
 
 **Interpreting Results:**
 - ✅ **PASS**: Dockerfile builds successfully; no compilation errors
 - ❌ **FAIL**: Dockerfile has runtime errors (invalid commands, missing dependencies)
+
 ### 2. Security Scan (Trivy)
 **What it does:**
 - Scans the built image for vulnerabilities using `aquasecurity/trivy-action`.
-- **Fails (Exit 1)** if any **CRITICAL** vulnerability with a known patch is found.
+- **CRITICAL** vulnérabilités → **bloquent** le build (`exit-code: 1`, `ignore-unfixed: true`).
+- **HIGH** vulnérabilités → **reportées** mais non-bloquantes (`exit-code: 0`).
 - Uploads detailed results to GitHub's **Security** tab (SARIF format).
 
 **Interpreting Results:**
 - ✅ **PASS**: No critical vulnerabilities found (or all found issues are unfixed/ignored).
 - ❌ **FAIL**: At least one CRITICAL vulnerability with an available patch was detected.
   - Review the "Security" tab in GitHub or the "Trivy vulnerability scan" job logs.
+  - HIGH vulnerabilities are logged but don't block — review them periodically.
 
 ---
 
@@ -134,6 +141,8 @@ The `.hadolint.yaml` file ignores these non-actionable rules:
 **What it does:**
 - Authenticates to GHCR using GitHub-provided `GITHUB_TOKEN`
 - Extracts Docker metadata (repository name, tags)
+- Builds **multi-arch** image via QEMU (`linux/amd64`, `linux/arm64`)
+- Passes `GITHUB_TOKEN` as build arg to avoid GitHub API rate limits
 - Builds image with tags:
   - `latest` — always points to most recent master commit
   - `<short-sha>` — commit hash (short form)
