@@ -4,6 +4,7 @@ container_name := "labo-ci"
 remote_image := "ghcr.io/yoyonel/labo-ignition:latest"
 image := "debian:trixie"
 script_name := "test_infra.sh"
+engine := env("CONTAINER_ENGINE", "podman")
 
 default:
     @just --list
@@ -20,7 +21,7 @@ lint-shell:
 lint-dockerfile:
     #!/usr/bin/env bash
     set -euo pipefail
-    podman run --rm -i -v $(pwd):/work:Z -w /work docker.io/hadolint/hadolint hadolint Dockerfile
+    {{engine}} run --rm -i -v $(pwd):/work:Z -w /work docker.io/hadolint/hadolint hadolint Dockerfile
 
 # Rejoue localement les prérequis CI/CD avant push
 ci-local:
@@ -105,7 +106,7 @@ test-ghostty:
 test-cli-tools: build
     #!/usr/bin/env bash
     set -u
-    podman run --rm \
+    {{engine}} run --rm \
       -v "$(pwd):/home/{{user_name}}/project:ro,z" \
       {{container_name}} \
       bash /home/{{user_name}}/project/tests/test-cli-tools.sh
@@ -121,7 +122,7 @@ test-ci:
     set -e
     echo -e "\e[1;36m==> Lancement de la CI en salle blanche (Podman)...\e[0m"
     chmod +x {{script_name}}
-    podman run --name {{container_name}} --rm \
+    {{engine}} run --name {{container_name}} --rm \
       -v $(pwd)/dotfiles:/mnt/dotfiles:ro,z \
       -v $(pwd)/{{script_name}}:/{{script_name}}:ro,z \
       {{image}} bash /{{script_name}}
@@ -136,7 +137,7 @@ analyze-image: build
 
 # Explore l'image interactivement avec dive (TUI)
 dive: build
-    dive podman://{{container_name}}
+    dive {{engine}}://{{container_name}}
 
 # Genere un graphe SVG des dependances d'un paquet Debian dans l'image
 # Usage: just debtree libgtk-4-1
@@ -144,7 +145,7 @@ debtree package: build
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Generating dependency graph for {{package}}..."
-    podman run --rm --user root {{container_name}} bash -c \
+    {{engine}} run --rm --user root {{container_name}} bash -c \
       'apt-get update -qq && apt-get install -y -qq --no-install-recommends debtree graphviz >/dev/null 2>&1 && debtree {{package}}' \
       | dot -Tsvg > "{{package}}-deps.svg"
     echo "Generated: {{package}}-deps.svg"
@@ -152,15 +153,15 @@ debtree package: build
 # Affiche l'arbre de dependances recursif d'un paquet
 # Usage: just apt-rdepends libgtk-4-1
 apt-rdepends package: build
-    podman run --rm --user root {{container_name}} bash -c \
+    {{engine}} run --rm --user root {{container_name}} bash -c \
       'apt-get update -qq && apt-get install -y -qq --no-install-recommends apt-rdepends >/dev/null 2>&1 && apt-rdepends {{package}}'
 
-# --- Laboratoire de développement (Docker/Podman) ---
+# --- Laboratoire de développement ---
 
 # Construit l'image avec ton utilisateur hôte pour les permissions
 build:
-    podman build \
-      --format docker \
+    {{engine}} build \
+      $([ "{{engine}}" = "podman" ] && echo "--format docker" || echo "") \
       --build-arg USER_ID={{user_id}} \
       --build-arg USER_NAME={{user_name}} \
       -t {{container_name}} .
@@ -173,8 +174,8 @@ lab: build
 
 # Télécharge la dernière version de l'image pré-construite depuis GHCR (Gain de temps/CPU)
 pull:
-    podman pull {{remote_image}}
-    podman tag {{remote_image}} {{container_name}}:latest
+    {{engine}} pull {{remote_image}}
+    {{engine}} tag {{remote_image}} {{container_name}}:latest
 
 # Lance le labo instantanément en utilisant l'image GHCR (évite le build local long)
 lab-remote: pull
@@ -184,8 +185,8 @@ lab-remote: pull
 
 # Nettoyage
 clean:
-    podman rm -f {{container_name}} 2>/dev/null || true
-    podman rm -f {{container_name}}-run 2>/dev/null || true
+    {{engine}} rm -f {{container_name}} 2>/dev/null || true
+    {{engine}} rm -f {{container_name}}-run 2>/dev/null || true
 
 clean-image:
-    podman rmi {{container_name}} 2>/dev/null || true
+    {{engine}} rmi {{container_name}} 2>/dev/null || true
