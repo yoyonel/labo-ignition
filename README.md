@@ -5,6 +5,11 @@
 
 Ce projet fournit un environnement de développement conteneurisé robuste, basé sur **Debian 13 (Trixie)**, optimisé pour un usage transparent sous **Bazzite/Fedora** avec le terminal **Ghostty**.
 
+Pour initialiser ton environnement (une seule fois) :
+```bash
+just setup
+```
+
 Pour lancer ton environnement de labo (via build local) :
 ```bash
 just lab
@@ -36,6 +41,7 @@ L'environnement propage les variables `GHOSTTY_*` et `TERM` pour permettre à de
 
 | Commande | Description |
 | :--- | :--- |
+| `just setup` | Initialise l'environnement local (Hooks + Brew bundle). |
 | `just lab` | Lance le shell (Build local — recommandé si tu as des besoins spécifiques). |
 | `just lab-remote` | Lance le shell instantanément via l'image de la CI (Économise CPU & Temps). |
 | `just pull` | Télécharge la dernière image depuis GitHub Container Registry (GHCR). |

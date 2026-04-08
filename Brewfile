@@ -3,6 +3,7 @@ brew "bat"
 brew "fzf"
 brew "fd"
 brew "ripgrep"
+brew "shellcheck"
 
 # Remplacement moderne de ls (icônes, git, tree)
 brew "eza"

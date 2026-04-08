@@ -58,6 +58,21 @@ configure-ghostty:
     chmod +x scripts/configure-ghostty.sh
     ./scripts/configure-ghostty.sh
 
+# Initialise l'environnement de développement complet (Hooks + Dépendances hôte via Brew)
+setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo -e "\e[1;36m==> Initialisation du projet...\e[0m"
+    if command -v brew &>/dev/null; then
+        echo "--> Installation des dépendances Homebrew..."
+        brew bundle
+    else
+        echo "--> [Warning] Homebrew non détecté, saut de l'installation des outils hôtes."
+    fi
+    echo "--> Configuration des hooks Git (pre-push)..."
+    just install-hooks
+    echo -e "\e[1;32m✓ Environnement de développement prêt !\e[0m"
+
 # Installation + Configuration en une seule commande
 setup-ghostty: install-ghostty configure-ghostty
     @echo -e "\e[1;32m✓ Ghostty complètement installé et configuré\e[0m"
