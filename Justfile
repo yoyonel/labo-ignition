@@ -1,6 +1,7 @@
 user_id := `id -u`
 user_name := `whoami`
 container_name := "labo-ci"
+remote_image := "ghcr.io/yoyonel/labo-ignition:latest"
 image := "debian:trixie"
 script_name := "test_infra.sh"
 
@@ -120,36 +121,22 @@ build:
       --build-arg USER_NAME={{user_name}} \
       -t {{container_name}} .
 
-# Lance le labo (Miroir $HOME + Terminal ISO + Marqueur PROMPT)
+# Lance le labo (Miroir $HOME + Terminal ISO + Marqueur PROMPT) - Construit localement
 lab: build
     #!/usr/bin/env bash
-    set -e
-    # Détecte Ghostty et ses variables d'env
-    chmod +x scripts/detect-ghostty.sh
-    source ./scripts/detect-ghostty.sh || true
-    
-    podman rm -f {{container_name}}-run 2>/dev/null || true
-    # Display forwarding (X11 + Wayland)
-    DISPLAY_ARGS=()
-    if [[ -n "${DISPLAY:-}" ]]; then
-        DISPLAY_ARGS+=(-e "DISPLAY=${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix:ro)
-        DISPLAY_ARGS+=(-e "XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}")
-    fi
-    if [[ -n "${WAYLAND_DISPLAY:-}" && -n "${XDG_RUNTIME_DIR:-}" ]]; then
-        DISPLAY_ARGS+=(-e "WAYLAND_DISPLAY=${WAYLAND_DISPLAY}" -v "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:ro")
-    fi
+    chmod +x scripts/lab-run.sh
+    ./scripts/lab-run.sh {{container_name}}
 
-    podman run -it --rm --name {{container_name}}-run \
-        --security-opt label=disable --network host \
-        --user root -e USER={{user_name}} -e HOME=$HOME \
-        -v $HOME:$HOME \
-        -e IN_LAB=true \
-        -e TERM -e COLORTERM -e XDG_RUNTIME_DIR \
-        -e GHOSTTY_BIN_DIR="${GHOSTTY_BIN_DIR:-}" \
-        -e GHOSTTY_RESOURCES_DIR="${GHOSTTY_RESOURCES_DIR:-}" \
-        "${DISPLAY_ARGS[@]}" \
-        --device /dev/dri \
-        --workdir $(pwd) {{container_name}} bash
+# Télécharge la dernière version de l'image pré-construite depuis GHCR (Gain de temps/CPU)
+pull:
+    podman pull {{remote_image}}
+    podman tag {{remote_image}} {{container_name}}:latest
+
+# Lance le labo instantanément en utilisant l'image GHCR (évite le build local long)
+lab-remote: pull
+    #!/usr/bin/env bash
+    chmod +x scripts/lab-run.sh
+    ./scripts/lab-run.sh {{remote_image}}
 
 # Nettoyage
 clean:

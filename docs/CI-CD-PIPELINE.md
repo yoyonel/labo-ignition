@@ -137,16 +137,18 @@ The `.hadolint.yaml` file ignores these non-actionable rules:
   - Push failures: GHCR registry may be temporarily unavailable
 
 **Using Published Images:**
+La méthode recommandée pour utiliser ces images tout en conservant tes permissions utilisateur (`UID/GID`) et ton `$HOME` est d'utiliser les recettes `just` :
+
 ```bash
-# Pull latest image
+# Utilisation optimisée (Recommandé - Zéro build local)
+just lab-remote
+
+# Ou manuellement via Podman
 podman pull ghcr.io/yoyonel/labo-ignition:latest
-
-# Pull specific commit
-podman pull ghcr.io/yoyonel/labo-ignition:<short-sha>
-
-# Run interactive shell
 podman run -it ghcr.io/yoyonel/labo-ignition:latest bash
 ```
+
+**Avantage :** L'utilisation de `just lab-remote` permet d'économiser environ 15 à 20 minutes de build CPU (notamment la compilation de `ripdrag` et le téléchargement des outils CLI modernes).
 
 ---
 

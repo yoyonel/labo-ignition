@@ -5,13 +5,16 @@
 
 Ce projet fournit un environnement de développement conteneurisé robuste, basé sur **Debian 13 (Trixie)**, optimisé pour un usage transparent sous **Bazzite/Fedora** avec le terminal **Ghostty**.
 
-## 🚀 Démarrage Rapide
-
-Pour lancer ton environnement de labo :
+Pour lancer ton environnement de labo (via build local) :
 ```bash
 just lab
 ```
-Cette commande construit l'image (si nécessaire) et te dépose dans un shell Debian 13 avec ton identité hôte et ton `$HOME` monté en miroir.
+
+Pour gagner du temps et du CPU (utilisation de l'image pré-construite sur la CI) :
+```bash
+just lab-remote
+```
+Cette commande télécharge l'image depuis GHCR et te dépose instantanément dans un shell Debian 13 avec ton identité hôte et ton `$HOME` monté en miroir.
 
 ## 🛠️ Configuration Recommandée
 
@@ -33,7 +36,9 @@ L'environnement propage les variables `GHOSTTY_*` et `TERM` pour permettre à de
 
 | Commande | Description |
 | :--- | :--- |
-| `just lab` | Lance le shell interactif (Miroir $HOME + Outils natifs). |
+| `just lab` | Lance le shell (Build local — recommandé si tu as des besoins spécifiques). |
+| `just lab-remote` | Lance le shell instantanément via l'image de la CI (Économise CPU & Temps). |
+| `just pull` | Télécharge la dernière image depuis GitHub Container Registry (GHCR). |
 | `just audit` | Valide ta configuration Ghostty et tes dotfiles. |
 | `just audit-links` | Analyse tes documentations Markdown et vérifie la validité des URLs. |
 | `just lint-shell` | Rejoue le lint shell de la CI localement. |
@@ -66,6 +71,7 @@ Le repo embarque maintenant une base GitHub Actions exploitable immédiatement.
 
 - **CI** : lint shell, exécution de la suite `tests/test-ghostty-integration.sh`, validation des liens, lint Dockerfile.
 - **Docker** : build de l'image sur PR et pushes pertinents, publication sur GHCR lors d'un push sur `master` ou `main`.
+- **Image utilisable** : Tu peux consommer directement l'image de la CI via `just lab-remote` pour éviter de recompiler les outils lourds (comme `ripdrag`).
 - **Dependabot** : surveillance hebdomadaire des actions GitHub et de la base Docker.
 
 ### Workflows
