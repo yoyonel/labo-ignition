@@ -45,7 +45,8 @@ jobs:
           build-args: |
             USER_ID=1000
             USER_NAME=github
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          secrets: |
+            "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -131,7 +132,8 @@ jobs:
           build-args: |
             USER_ID=1000
             USER_NAME=github
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          secrets: |
+            "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

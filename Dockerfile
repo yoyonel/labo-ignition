@@ -1,12 +1,12 @@
 # =============================================================================
-# Stage 1: Build ripdrag from source (isolé, ne pollue pas l'image finale)
+# Stage 1: Build tools from source (isolé pour la sécurité)
 # =============================================================================
-FROM debian:trixie-slim AS builder-ripdrag
+FROM debian:trixie-slim AS builder
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-        curl ca-certificates pkg-config libgtk-4-dev gcc libc6-dev \
+        curl ca-certificates pkg-config libgtk-4-dev gcc libc6-dev git \
     && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal \
     && . /root/.cargo/env \
     && cargo install ripdrag \
@@ -25,9 +25,6 @@ ARG USER_ID=1000
 ARG USER_NAME=developer
 # Architecture cible (injectée automatiquement par Docker Buildx / Podman --platform)
 ARG TARGETARCH=amd64
-# Token GitHub optionnel pour éviter le rate-limit API (60 req/h anonyme)
-# Usage: podman build --build-arg GITHUB_TOKEN=$(gh auth token) .
-ARG GITHUB_TOKEN=""
 
 # 1. Dépendances système & Outils CLI (Debian 13 Trixie)
 #    --no-install-recommends évite ~500MB de paquets parasites (LLVM, Mesa, pocketsphinx…)
@@ -35,7 +32,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     curl ca-certificates git tmux bat fzf ripgrep fd-find chafa \
     unzip sudo file less locales tzdata \
     ffmpegthumbnailer poppler-utils jq 7zip direnv \
-    ncurses-term btop \
+    ncurses-term btop glow \
     imagemagick --no-install-recommends \
     libgtk-4-1 libpango-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
     && sed -i '/fr_FR.UTF-8/s/^# //' /etc/locale.gen \
@@ -49,7 +46,9 @@ ENV TZ=Europe/Paris
 
 # 2. Installation des outils (natif & global)
 # hadolint ignore=SC2046,SC2086
-RUN ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+    && GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN 2>/dev/null || echo "") \
     && GH_AUTH=$([ -n "${GITHUB_TOKEN}" ] && echo "-H Authorization: Bearer ${GITHUB_TOKEN}" || echo "") \
     && curl -sS https://starship.rs/install.sh | sh -s -- -y \
     && curl -LsSf https://astral.sh/uv/install.sh | sh && mv /root/.local/bin/uv* /usr/local/bin/ \
@@ -65,8 +64,9 @@ RUN ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 
 # 2b. Outils CLI modernes (GitHub releases)
 # hadolint ignore=SC2046,SC2086,DL3003
-RUN ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
-    && GLOW_ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "arm64" || echo "x86_64") \
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+    && GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN 2>/dev/null || echo "") \
     && GH_AUTH=$([ -n "${GITHUB_TOKEN}" ] && echo "-H Authorization: Bearer ${GITHUB_TOKEN}" || echo "") \
     && EZA_URL=$(curl -s ${GH_AUTH} https://api.github.com/repos/eza-community/eza/releases/latest | jq -r --arg arch "${ARCH}-unknown-linux-gnu.tar.gz" '.assets[] | select(.name | endswith($arch)) | select(.name | contains("man") | not) | .browser_download_url') \
     && curl -L "${EZA_URL}" -o /tmp/eza.tar.gz \
@@ -82,27 +82,20 @@ RUN ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
     && tar -xzf /tmp/dust.tar.gz -C /tmp/ && mv /tmp/dust-*/dust /usr/local/bin/ && rm -rf /tmp/dust* \
     && HF_URL=$(curl -s ${GH_AUTH} https://api.github.com/repos/sharkdp/hyperfine/releases/latest | jq -r --arg arch "${ARCH}-unknown-linux-musl.tar.gz" '.assets[] | select(.name | endswith($arch)) | .browser_download_url') \
     && curl -L "${HF_URL}" -o /tmp/hyperfine.tar.gz \
-    && tar -xzf /tmp/hyperfine.tar.gz -C /tmp/ && mv /tmp/hyperfine-*/hyperfine /usr/local/bin/ && rm -rf /tmp/hyperfine* \
-    && GLOW_RELEASE=$(curl -s ${GH_AUTH} https://api.github.com/repos/charmbracelet/glow/releases/latest) \
-    && GLOW_URL=$(echo "${GLOW_RELEASE}" | jq -r --arg arch "Linux_${GLOW_ARCH}.tar.gz" '.assets[] | select(.name | endswith($arch)) | .browser_download_url') \
-    && GLOW_CHECKSUMS_URL=$(echo "${GLOW_RELEASE}" | jq -r '.assets[] | select(.name == "checksums.txt") | .browser_download_url') \
-    && GLOW_FILE=$(basename "${GLOW_URL}") \
-    && curl -L "${GLOW_URL}" -o "/tmp/${GLOW_FILE}" \
-    && curl -sL "${GLOW_CHECKSUMS_URL}" -o /tmp/glow-checksums.txt \
-    && (cd /tmp && grep -F "${GLOW_FILE}" glow-checksums.txt | grep -v ".sbom" | sha256sum --check --status) \
-    && mkdir -p /tmp/glow-pkg && tar -xzf "/tmp/${GLOW_FILE}" -C /tmp/glow-pkg/ \
-    && find /tmp/glow-pkg -name glow -type f -exec mv {} /usr/local/bin/ \; && rm -rf /tmp/glow*
+    && tar -xzf /tmp/hyperfine.tar.gz -C /tmp/ && mv /tmp/hyperfine-*/hyperfine /usr/local/bin/ && rm -rf /tmp/hyperfine*
 
 # 3. Création de l'utilisateur identique à l'hôte
 RUN useradd -m -u ${USER_ID} -s /bin/bash ${USER_NAME} \
     && echo "${USER_NAME} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/dpkg" >> /etc/sudoers
 
-# 4. ripdrag (copié depuis le builder stage)
-COPY --from=builder-ripdrag /usr/local/bin/ripdrag /usr/local/bin/ripdrag
+# 4. Outils compilés (copiés depuis le builder stage)
+COPY --from=builder /usr/local/bin/ripdrag /usr/local/bin/ripdrag
 
 # 5. YAZI (Dernière version pré-compilée)
 # hadolint ignore=SC2086
-RUN ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    ARCH=$([ "${TARGETARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+    && GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN 2>/dev/null || echo "") \
     && GH_AUTH=$([ -n "${GITHUB_TOKEN}" ] && echo "-H Authorization: Bearer ${GITHUB_TOKEN}" || echo "") \
     && YAZI_VERSION=$(curl -s ${GH_AUTH} https://api.github.com/repos/sxyazi/yazi/releases/latest | jq -r '.tag_name') \
     && curl -L "https://github.com/sxyazi/yazi/releases/download/${YAZI_VERSION}/yazi-${ARCH}-unknown-linux-gnu.zip" -o /tmp/yazi.zip \
