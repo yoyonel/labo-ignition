@@ -37,5 +37,8 @@ brew "chafa"
 brew "imagemagick"
 brew "ffmpegthumbnailer"
 
+# Analyse de layers Docker/Podman (efficacité, wasted space)
+brew "dive"
+
 # L'outil de déploiement lui-même
 brew "chezmoi"

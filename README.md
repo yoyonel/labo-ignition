@@ -53,6 +53,10 @@ L'environnement propage les variables `GHOSTTY_*` et `TERM` pour permettre à de
 | `just install-hooks` | Installe les hooks `pre-commit` et `pre-push` du repo. |
 | `just test-ghostty` | Exécute la suite de tests Ghostty et documentation. |
 | `just build` | Force la reconstruction de l'image `labo-ci`. |
+| `just analyze-image` | Rapport complet de taille image (dive + layers + deps). |
+| `just dive` | Explore l'image interactivement avec dive (TUI). |
+| `just debtree <pkg>` | Génère un graphe SVG des dépendances d'un paquet Debian. |
+| `just apt-rdepends <pkg>` | Arbre de dépendances récursif d'un paquet. |
 | `just clean` | Supprime les conteneurs et images orphelines. |
 
 ## 🏗️ Architecture du Conteneur

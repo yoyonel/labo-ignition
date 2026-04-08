@@ -28,6 +28,10 @@ docs/               # PORTABILITY-AUDIT, CI-CD-PIPELINE, CLI-TOOLS, TEST-SUITE-A
 | Lint shell | `just lint-shell` |
 | Lint Dockerfile | `just lint-dockerfile` |
 | Tests CLI dans container | `just test-cli-tools` |
+| Analyse taille image | `just analyze-image` |
+| Explorer image (TUI) | `just dive` |
+| Graphe deps paquet | `just debtree <pkg>` |
+| Arbre deps paquet | `just apt-rdepends <pkg>` |
 | Vérifier liens docs | `just audit-links` |
 
 ## Règles strictes

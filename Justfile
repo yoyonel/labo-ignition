@@ -126,6 +126,35 @@ test-ci:
       -v $(pwd)/{{script_name}}:/{{script_name}}:ro,z \
       {{image}} bash /{{script_name}}
 
+# --- Analyse d'image ---
+
+# Analyse complete de la taille de l'image (dive + deps + layers)
+analyze-image: build
+    #!/usr/bin/env bash
+    chmod +x scripts/analyze-image.sh
+    ./scripts/analyze-image.sh {{container_name}}
+
+# Explore l'image interactivement avec dive (TUI)
+dive: build
+    dive podman://{{container_name}}
+
+# Genere un graphe SVG des dependances d'un paquet Debian dans l'image
+# Usage: just debtree libgtk-4-1
+debtree package: build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Generating dependency graph for {{package}}..."
+    podman run --rm {{container_name}} bash -c \
+      'apt-get update -qq && apt-get install -y -qq --no-install-recommends debtree graphviz >/dev/null 2>&1 && debtree {{package}}' \
+      | dot -Tsvg > "{{package}}-deps.svg"
+    echo "Generated: {{package}}-deps.svg"
+
+# Affiche l'arbre de dependances recursif d'un paquet
+# Usage: just apt-rdepends libgtk-4-1
+apt-rdepends package: build
+    podman run --rm {{container_name}} bash -c \
+      'apt-get update -qq && apt-get install -y -qq --no-install-recommends apt-rdepends >/dev/null 2>&1 && apt-rdepends {{package}}'
+
 # --- Laboratoire de développement (Docker/Podman) ---
 
 # Construit l'image avec ton utilisateur hôte pour les permissions

@@ -198,7 +198,51 @@ Ces relations de dependance sont de type `Depends` (pas `Recommends`), donc non 
 - `libllvm19` **Depends** `libz3-4`
 - `libavfilter10` **Depends** `libplacebo349`
 
-## Methode d'analyse
+## Outillage d'analyse
+
+### Recettes Just disponibles
+
+| Commande | Description |
+|---|---|
+| `just analyze-image` | Rapport complet automatise : dive + layers + top paquets + deps inverses |
+| `just dive` | TUI interactif dive — exploration layer par layer |
+| `just debtree <pkg>` | Genere un graphe SVG des dependances d'un paquet (ex: `just debtree libgtk-4-1`) |
+| `just apt-rdepends <pkg>` | Arbre de dependances recursif en texte |
+
+### Outils utilises
+
+| Outil | Install | Scope | Role |
+|---|---|---|---|
+| **dive** | `brew install dive` (hote) | Layers image | Score d'efficacite, fichiers dupliques entre layers, wasted space |
+| **debtree** | apt (dans container) | Deps Debian | Graphe DOT des dependances d'un paquet → SVG via Graphviz |
+| **apt-rdepends** | apt (dans container) | Deps Debian | Arbre de dependances recursif (texte ou format DOT) |
+| **aptitude why** | apt (dans container) | Deps Debian | Explique la chaine qui force l'installation d'un paquet |
+
+> `debtree` et `apt-rdepends` ne sont pas installes dans l'image de production (bloat). Les recettes Just les installent a la volee dans un container ephemere.
+
+### Exemples d'utilisation
+
+```bash
+# Rapport complet
+just analyze-image
+
+# Explorer l'image interactivement
+just dive
+
+# Pourquoi libllvm19 est installe ?
+just apt-rdepends libllvm19
+
+# Graphe visuel des deps de GTK4
+just debtree libgtk-4-1
+# Ouvrir le SVG genere
+xdg-open libgtk-4-1-deps.svg
+
+# Analyse ponctuelle dans le container
+podman run --rm labo-ci bash -c \
+  "dpkg-query -Wf '\${Installed-Size}\t\${Package}\n' | sort -rn | head -20"
+```
+
+### Methode de collecte des donnees
 
 Les donnees de ce document ont ete collectees avec :
 
