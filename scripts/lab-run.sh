@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 # scripts/lab-run.sh
 # Lance l'environnement de laboratoire avec les bons montages et permissions.
+#
+# Variables d'environnement (opt-in) :
+#   LAB_MOUNT_HOME=1    — Monte $HOME entier (ancien comportement, déconseillé)
+#   LAB_NETWORK_HOST=1  — Utilise --network host au lieu de slirp4netns (isolé)
+#   CONTAINER_ENGINE    — Moteur container (défaut: podman)
 
 set -euo pipefail
 
 IMAGE_NAME="${1:-labo-ci}"
 USER_NAME=$(whoami)
 PROJECT_DIR=$(pwd)
+ENGINE="${CONTAINER_ENGINE:-podman}"
 
 echo -e "\e[1;36m==> Lancement du labo-ignition via l'image : ${IMAGE_NAME}...\e[0m"
 
@@ -17,7 +23,39 @@ if [[ -f "./scripts/detect-ghostty.sh" ]]; then
 fi
 
 # Nettoyage préalable
-podman rm -f labo-ci-run 2>/dev/null || true
+"${ENGINE}" rm -f labo-ci-run 2>/dev/null || true
+
+# --- Montages sécurisés (T1) ---
+# Par défaut : montages ciblés read-only au lieu de $HOME entier
+MOUNT_ARGS=()
+if [[ "${LAB_MOUNT_HOME:-0}" == "1" ]]; then
+    echo -e "\e[1;33m⚠ LAB_MOUNT_HOME=1 : montage complet de \$HOME (déconseillé)\e[0m"
+    MOUNT_ARGS+=(-v "${HOME}:${HOME}")
+else
+    # Projet courant (writable)
+    MOUNT_ARGS+=(-v "${PROJECT_DIR}:${PROJECT_DIR}:z")
+    # Git identity (read-only)
+    [[ -f "$HOME/.gitconfig" ]] && MOUNT_ARGS+=(-v "$HOME/.gitconfig:$HOME/.gitconfig:ro,z")
+    [[ -d "$HOME/.config/git" ]] && MOUNT_ARGS+=(-v "$HOME/.config/git:$HOME/.config/git:ro,z")
+    # SSH keys (read-only)
+    [[ -d "$HOME/.ssh" ]] && MOUNT_ARGS+=(-v "$HOME/.ssh:$HOME/.ssh:ro,z")
+    # GPG (read-only, si présent)
+    [[ -d "$HOME/.gnupg" ]] && MOUNT_ARGS+=(-v "$HOME/.gnupg:$HOME/.gnupg:ro,z")
+fi
+
+# --- Réseau (T2) ---
+NETWORK_ARGS=()
+if [[ "${LAB_NETWORK_HOST:-0}" == "1" ]]; then
+    NETWORK_ARGS+=(--network host)
+else
+    NETWORK_ARGS+=(--network slirp4netns)
+fi
+
+# --- GPU conditionnel (T5 preview) ---
+GPU_ARGS=()
+if [[ -e /dev/dri ]]; then
+    GPU_ARGS+=(--device /dev/dri)
+fi
 
 # Gestion du Display (X11 + Wayland)
 DISPLAY_ARGS=()
@@ -39,22 +77,22 @@ if [[ -n "${WAYLAND_DISPLAY:-}" && -n "${XDG_RUNTIME_DIR:-}" ]]; then
     fi
 fi
 
-# Exécution Podman
-# Note: On utilise --user root pour que root-in-container == host-user en rootless Podman.
-# Cela garantit que le montage de $HOME fonctionne sans friction de permissions.
-podman run -it --rm \
+# Exécution container
+# --user root en rootless Podman : root-in-container == UID hôte (pas de vrais privilèges).
+# C'est le mécanisme natif documenté dans Podman-Rootless-Permissions.md.
+# --userns keep-id provoque des erreurs overlay sur Bazzite/Fedora Atomic, donc on garde --user root.
+"${ENGINE}" run -it --rm \
     --name labo-ci-run \
-    --security-opt label=disable \
-    --network host \
     --user root \
+    "${NETWORK_ARGS[@]}" \
     -e USER="${USER_NAME}" \
     -e HOME="${HOME}" \
-    -v "${HOME}:${HOME}" \
+    "${MOUNT_ARGS[@]}" \
     -e IN_LAB=true \
     -e TERM -e COLORTERM -e XDG_RUNTIME_DIR \
     -e GHOSTTY_BIN_DIR="${GHOSTTY_BIN_DIR:-}" \
     -e GHOSTTY_RESOURCES_DIR="${GHOSTTY_RESOURCES_DIR:-}" \
     "${DISPLAY_ARGS[@]}" \
-    --device /dev/dri \
+    "${GPU_ARGS[@]}" \
     --workdir "${PROJECT_DIR}" \
     "${IMAGE_NAME}" bash
