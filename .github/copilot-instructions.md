@@ -38,9 +38,10 @@ docs/               # PORTABILITY-AUDIT, CI-CD-PIPELINE, CLI-TOOLS, TEST-SUITE-A
 
 1. **Avant tout commit** : linter + tests doivent passer.
 2. **Avant tout push** : `just ci-local` doit être vert (shellcheck + ghostty tests + liens + hadolint + build + 85 tests CLI).
-3. **Après tout push** : surveiller les workflows GitHub Actions (CI + Docker) jusqu'à complétion. Corriger immédiatement si échec.
-4. **Documentation** : tout changement non-trivial doit être documenté dans le `.md` concerné. Vérifier les liens avec `just audit-links`.
-5. **Zéro lien mort** dans le repo.
+3. **JAMAIS push sans permission explicite** : ne JAMAIS exécuter `git push` sauf si l'utilisateur donne son autorisation écrite dans le prompt. Préparer le commit, montrer le diff, attendre le feu vert.
+4. **Après tout push** : surveiller les workflows GitHub Actions (CI + Docker) jusqu'à complétion. Corriger immédiatement si échec.
+5. **Documentation** : tout changement non-trivial doit être documenté dans le `.md` concerné. Vérifier les liens avec `just audit-links`.
+6. **Zéro lien mort** dans le repo.
 
 ## Conventions Dockerfile
 
