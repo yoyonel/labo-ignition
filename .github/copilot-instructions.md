@@ -42,6 +42,13 @@ docs/               # PORTABILITY-AUDIT, CI-CD-PIPELINE, CLI-TOOLS, TEST-SUITE-A
 4. **Après tout push** : surveiller les workflows GitHub Actions (CI + Docker) jusqu'à complétion. Corriger immédiatement si échec.
 5. **Documentation** : tout changement non-trivial doit être documenté dans le `.md` concerné. Vérifier les liens avec `just audit-links`.
 6. **Zéro lien mort** dans le repo.
+7. **Rapport de couverture de test OBLIGATOIRE** : chaque fois que l'agent déclare avoir "testé" ou "fini de tester", il DOIT produire un rapport structuré contenant :
+   - Liste EXHAUSTIVE de TOUTES les recettes Justfile (`just --list`) avec statut : ✅ Testé / ❌ Non testé / ⊘ N/A.
+   - Liste EXHAUSTIVE de TOUS les scripts du repo (`scripts/*.sh`, `tests/*.sh`, `check_links.sh`, `test_infra.sh`) avec statut.
+   - Pourcentage de couverture par composant (ex. "Justfile: 12/18 testées (67%)").
+   - Pourcentage de couverture global.
+   - Si couverture < 100% : lister explicitement ce qui n'a PAS été testé et pourquoi.
+   - Ne JAMAIS dire "tout est testé" sans ce rapport complet. Le rapport doit être factuel (exécuté = ✅, pas exécuté = ❌).
 
 ## Conventions Dockerfile
 

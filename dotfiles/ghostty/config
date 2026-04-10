@@ -43,6 +43,10 @@ fullscreen = true
 window-padding-x = 12
 window-padding-y = 12
 
+# Démarrer maximisé (pas fullscreen)
+# Ref: https://ghostty.org/docs/config/reference#maximize
+maximize = true
+
 # Décoration fenêtre: auto (native) | client | server | none
 # Ref: https://ghostty.org/docs/config/reference#window-decoration
 window-decoration = auto
@@ -61,6 +65,10 @@ term = xterm-ghostty-256color
 # Ctrl+Shift+C/V = copy/paste sans conflit
 keybind = "ctrl+shift+c=copy_to_clipboard"
 keybind = "ctrl+shift+v=paste_from_clipboard"
+
+# Toggle maximize : Ctrl+Shift+M pour maximiser/restaurer la fenêtre
+# Note: Super+M est pris par Compiz Negative (inversion couleurs) — ne PAS utiliser
+keybind = "ctrl+shift+m=toggle_maximize"
 
 # --- Curseur ---
 # Types: block, beam, underline

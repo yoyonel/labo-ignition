@@ -5,23 +5,7 @@ on:
     branches:
       - master
       - main
-    paths:
-      - Dockerfile
-      - Justfile
-      - test_infra.sh
-      - scripts/**
-      - dotfiles/**
-      - tests/**
-      - .github/workflows/docker.yml
   pull_request:
-    paths:
-      - Dockerfile
-      - Justfile
-      - test_infra.sh
-      - scripts/**
-      - dotfiles/**
-      - tests/**
-      - .github/workflows/docker.yml
   workflow_dispatch:
 
 concurrency:
@@ -31,6 +15,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  security-events: write
 
 env:
   REGISTRY: ghcr.io
@@ -60,6 +45,8 @@ jobs:
           build-args: |
             USER_ID=1000
             USER_NAME=github
+          secrets: |
+            "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -69,6 +56,47 @@ jobs:
             -v "${{ github.workspace }}:/home/github/project:ro" \
             labo-ci-test:latest \
             bash /home/github/project/tests/test-cli-tools.sh
+
+      - name: Trivy scan — block on CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: labo-ci-test:latest
+          format: table
+          exit-code: 1
+          severity: CRITICAL
+          ignore-unfixed: true
+
+      - name: Trivy scan — report HIGH vulnerabilities (non-blocking)
+        if: always()
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: labo-ci-test:latest
+          format: table
+          exit-code: 0
+          severity: HIGH
+
+      - name: Trivy vulnerability scan (SARIF output for Security tab)
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          image-ref: labo-ci-test:latest
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Fix Trivy SARIF URI (Normalization for GitHub)
+        if: always()
+        run: |
+          # Remplace le schéma 'labo-ci-test:latest' par un chemin relatif vers le Dockerfile
+          # pour que GitHub accepte d'importer le rapport de sécurité.
+          sed -i 's/labo-ci-test:latest/Dockerfile/g' trivy-results.sarif
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-image
 
   publish:
     name: Publish To GHCR
@@ -80,6 +108,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -106,10 +137,33 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           build-args: |
             USER_ID=1000
             USER_NAME=github
+          secrets: |
+            "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Final job to provide a single 'Docker' status check
+  docker-status:
+    name: Docker
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.build.result }}" == "success" ]]; then
+            echo "Docker build passed"
+            exit 0
+          elif [[ "${{ needs.build.result }}" == "skipped" ]]; then
+            echo "Docker build skipped (normal)"
+            exit 0
+          else
+            echo "Docker build failed"
+            exit 1
+          fi

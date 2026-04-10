@@ -71,11 +71,34 @@ L'image `labo-ci` (~750 MB) est autonome et installe nativement :
 **Optimisations image** : base `debian:trixie-slim`, `--no-install-recommends`, multi-stage build pour `ripdrag` (Rust/GTK-dev isolés du runtime).
 
 ## 🛡️ Sécurité & Permissions
-- **Mirror Mount** : Ton `$HOME` hôte est monté tel quel (ex: `/var/home/latty`). Toutes tes configs (`.bashrc`, `.ssh`, `.gitconfig`) sont disponibles.
-- **SELinux** : Le labo est lancé avec `--security-opt label=disable` pour permettre l'accès à tes fichiers sans conflits de permissions sur Bazzite.
+- **Montages ciblés** : Par défaut, seuls le répertoire projet (writable), `.gitconfig`, `.ssh` et `.gnupg` (read-only) sont montés. L'ancien comportement (montage complet de `$HOME`) est disponible via `LAB_MOUNT_HOME=1`.
+- **Réseau isolé** : Le container utilise `slirp4netns` (réseau isolé). Pour l'ancien mode `--network host`, utiliser `LAB_NETWORK_HOST=1`.
 - **Rootless** : Podman tourne en mode non-root. Le container s'exécute avec `--user root` : en rootless podman, `root` dans le container = ton `uid` hôte (1000), sans aucun privilège supplémentaire. C'est la même technique qu'utilise Distrobox.
+- **Sudoers restreint** : `NOPASSWD` limité à `apt-get` et `dpkg` uniquement.
 - **Display Forwarding** : Détection automatique X11/Wayland — `DISPLAY`, `XAUTHORITY`, socket X11 et socket Wayland sont propagés si présents.
-- **GPU Passthrough** : `/dev/dri` est monté dans le conteneur pour permettre l'accélération graphique (Mesa/DRI) nécessaire aux outils GTK4 comme `ripdrag`.
+- **GPU Passthrough** : `/dev/dri` monté conditionnellement (uniquement s'il existe sur l'hôte).
+- **Scan de vulnérabilités** : Trivy analyse l'image en CI — les vulnérabilités CRITICAL bloquent le build, les HIGH sont reportées.
+
+## ⚙️ Variables d'environnement (opt-in)
+
+| Variable | Défaut | Description |
+| :--- | :--- | :--- |
+| `LAB_MOUNT_HOME` | `0` | `1` pour monter `$HOME` entier (ancien comportement, déconseillé) |
+| `LAB_NETWORK_HOST` | `0` | `1` pour utiliser `--network host` au lieu de `slirp4netns` |
+| `CONTAINER_ENGINE` | `podman` | Moteur container (`podman` ou `docker`) |
+| `GITHUB_TOKEN` | _(vide)_ | Token GitHub pour éviter le rate-limit API lors du build |
+
+**Exemples :**
+```bash
+# Build avec token GitHub (évite le rate-limit de 60 req/h)
+just build GITHUB_TOKEN=$(gh auth token)
+
+# Lancer le labo avec Docker au lieu de Podman
+CONTAINER_ENGINE=docker just lab
+
+# Lancer le labo avec montage $HOME complet (migration)
+LAB_MOUNT_HOME=1 just lab
+```
 
 ## 🔁 CI/CD GitHub
 

@@ -94,29 +94,46 @@ The `.hadolint.yaml` file ignores these non-actionable rules:
 **Purpose:** Build container images and publish to GitHub Container Registry (GHCR) on successful CI checks.
 
 **Trigger Conditions:**
-- **Push** to `master` or `main` branches AND modified files include: `Dockerfile`, `Justfile`, `test_infra.sh`, `scripts/`, `dotfiles/`, or `.github/workflows/docker.yml`
-- **Pull Requests** with changes to same paths
+- **Push** to `master` or `main` branches
+- **Pull Requests** against any branch
 - Manual workflow dispatch
+
+> [!NOTE]
+> All path filters have been removed to ensure workflows always run, preventing "Deadlock" situations where required checks wouldn't trigger on documentation-only changes.
 
 **Jobs:**
 
 ### 1. Build Container Image (30 min timeout)
 **What it does:**
 - Sets up Docker Buildx multi-platform builder
-- Builds container image from `Dockerfile` with arguments: `USER_ID=1000`, `USER_NAME=github`
+- Builds container image from `Dockerfile` with arguments: `USER_ID=1000`, `USER_NAME=github`, `GITHUB_TOKEN`
+- Runs the 85 CLI tools integration tests inside the container
+- Runs **Trivy vulnerability scan** (split strategy):
+  - **CRITICAL** vulnérabilités → **bloquent** le build (`exit-code: 1`)
+  - **HIGH** vulnérabilités → **reportées** mais non-bloquantes (`exit-code: 0`)
 - **Does NOT push** — smoke test only
 - Caches build layers in GitHub Actions cache
 
 **Interpreting Results:**
 - ✅ **PASS**: Dockerfile builds successfully; no compilation errors
 - ❌ **FAIL**: Dockerfile has runtime errors (invalid commands, missing dependencies)
-  - Check build output for specific errors (usually near the failing `RUN` step)
-  - Verify dependencies are installed before use
-  - Check for typos in commands
+
+### 2. Security Scan (Trivy)
+**What it does:**
+- Scans the built image for vulnerabilities using `aquasecurity/trivy-action`.
+- **CRITICAL** vulnérabilités → **bloquent** le build (`exit-code: 1`, `ignore-unfixed: true`).
+- **HIGH** vulnérabilités → **reportées** mais non-bloquantes (`exit-code: 0`).
+- Uploads detailed results to GitHub's **Security** tab (SARIF format).
+
+**Interpreting Results:**
+- ✅ **PASS**: No critical vulnerabilities found (or all found issues are unfixed/ignored).
+- ❌ **FAIL**: At least one CRITICAL vulnerability with an available patch was detected.
+  - Review the "Security" tab in GitHub or the "Trivy vulnerability scan" job logs.
+  - HIGH vulnerabilities are logged but don't block — review them periodically.
 
 ---
 
-### 2. Publish To GHCR (30 min timeout)
+### 3. Publish To GHCR (30 min timeout)
 **Conditions:**
 - Only runs on successful **push** to `master` or `main` (not on PRs)
 - Requires successful completion of "Build Container Image" job
@@ -124,6 +141,8 @@ The `.hadolint.yaml` file ignores these non-actionable rules:
 **What it does:**
 - Authenticates to GHCR using GitHub-provided `GITHUB_TOKEN`
 - Extracts Docker metadata (repository name, tags)
+- Builds **multi-arch** image via QEMU (`linux/amd64`, `linux/arm64`)
+- Passes `GITHUB_TOKEN` as build arg to avoid GitHub API rate limits
 - Builds image with tags:
   - `latest` — always points to most recent master commit
   - `<short-sha>` — commit hash (short form)
@@ -232,10 +251,10 @@ just install-hooks
 ## Branch Protection Rules
 
 The `master` branch is protected to require:
-- ✅ CI workflow passing (all 3 jobs: shell tests, documentation, Dockerfile lint)
-- ✅ Docker workflow passing (build and publish jobs)
-- These checks must **pass before** any PR can be merged
-- Enforces code quality and prevents broken images from being published to GHCR
+- ✅ **CI** status (Workflow summary check)
+- ✅ **Docker** status (Workflow summary check)
+- These checks must **pass before** any PR can be merged.
+- Both workflows use "Conclusion Jobs" to report a unified status specifically named `CI` and `Docker` to satisfy GitHub's requirement naming.
 
 ---
 
@@ -264,6 +283,7 @@ concurrency:
 **Docker Workflow Permissions:**
 - `contents: read` — Can read repository contents
 - `packages: write` — Can write container images to GHCR (required for publishing)
+- `security-events: write` — Required to upload Trivy security scan results to GitHub Security tab
 
 Workflows do **not** have permission to modify repository code or create commits.
 

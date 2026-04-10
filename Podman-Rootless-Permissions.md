@@ -279,3 +279,7 @@ fichier `.md` du repo :
 - **Fichiers créés dans `$HOME`** : Tous les fichiers créés par le container dans `$HOME`
   appartiennent à `uid=1000` (latty) sur l'hôte — comportement correct et identique à ce
   que `--userns keep-id` aurait donné.
+- **SELinux (Bazzite/Fedora)** : L'option `--security-opt label=disable` est obligatoire
+  lorsqu'on monte `$HOME` sans utiliser le flag `:z` (qui relabeliserait récursivement
+  tout le home, ce qui est dangereux et lent). Elle permet au container de lire les
+  configs (`.bashrc`, `.config/yazi/`, etc.) sans erreur `Permission denied`.
